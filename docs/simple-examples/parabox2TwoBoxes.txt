@@ -1,0 +1,40 @@
+version 4
+(Small Maze)
+#
+Block -1 -1 0 7 7 0.6 0.8 1 1 0 0 0 0 0 0 0 (the root block)
+	Block 2 2 1 1 1 0.9 1 0.7 1 1 1 1 0 0 0 0 (the player start)
+	Floor 4 4 PlayerButton (the player goal)
+	Floor 1 1 Button (box buttons)
+	Floor 5 5 Button (box buttons)
+	(exterior walls)
+	Wall 0 0 0 0 0
+	Wall 1 0 0 0 0
+	Wall 2 0 0 0 0
+	Wall 3 0 0 0 0
+	Wall 4 0 0 0 0
+	Wall 5 0 0 0 0
+	Wall 6 0 0 0 0
+	Wall 0 6 0 0 0
+	Wall 1 6 0 0 0
+	Wall 2 6 0 0 0
+	Wall 3 6 0 0 0
+	Wall 4 6 0 0 0
+	Wall 5 6 0 0 0
+	Wall 6 6 0 0 0
+	Wall 0 1 0 0 0
+	Wall 0 2 0 0 0
+	Wall 0 3 0 0 0
+	Wall 0 4 0 0 0
+	Wall 0 5 0 0 0
+	Wall 0 6 0 0 0
+	Wall 6 1 0 0 0
+	Wall 6 2 0 0 0
+	Wall 6 3 0 0 0
+	Wall 6 4 0 0 0
+	Wall 6 5 0 0 0
+	Wall 6 6 0 0 0
+	(boxes)
+	Block 2 4 10 1 1 0.6 0.8 1 1 1 0 0 0 0 0 0
+	Block 4 2 11 1 1 0.6 0.8 1 1 1 0 0 0 0 0 0
+
+
