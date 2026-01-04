@@ -166,10 +166,9 @@ export function GridEditor() {
     return obj && obj.x === x && obj.y === y
   }
 
-  // Create grid rows (reversed so y=0 is at bottom)
-  const rows = []
+  // Create grid cells (y reversed so y=0 is at bottom)
+  const cells = []
   for (let y = height - 1; y >= 0; y--) {
-    const cells = []
     for (let x = 0; x < width; x++) {
       cells.push(
         <GridCell
@@ -183,11 +182,6 @@ export function GridEditor() {
         />
       )
     }
-    rows.push(
-      <div key={y} className="flex">
-        {cells}
-      </div>
-    )
   }
 
   return (
@@ -204,12 +198,13 @@ export function GridEditor() {
         )}
       </div>
       <div
-        className="grid gap-0 border border-border rounded-md overflow-hidden"
+        className="grid border border-border rounded-md overflow-hidden"
         style={{
-          gridTemplateColumns: `repeat(${width}, minmax(32px, 48px))`,
+          gridTemplateColumns: `repeat(${width}, 40px)`,
+          gridTemplateRows: `repeat(${height}, 40px)`,
         }}
       >
-        {rows.flat()}
+        {cells}
       </div>
     </div>
   )
