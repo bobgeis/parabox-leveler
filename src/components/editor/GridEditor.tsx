@@ -1,0 +1,216 @@
+/**
+ * Grid Editor - Main visual editing area for placing objects
+ */
+
+import { useSnapshot } from 'valtio'
+import { state, actions, getEditingBlock } from '@/store/levelStore'
+import type { LevelObject } from '@/types/level'
+import { cn } from '@/lib/utils'
+
+// Convert HSV to CSS color
+function hsvToColor(h: number, s: number, v: number, alpha: number = 1): string {
+  const c = v * s
+  const x = c * (1 - Math.abs(((h * 6) % 2) - 1))
+  const m = v - c
+
+  let r = 0,
+    g = 0,
+    b = 0
+  const hue = h * 6
+
+  if (hue < 1) {
+    r = c
+    g = x
+  } else if (hue < 2) {
+    r = x
+    g = c
+  } else if (hue < 3) {
+    g = c
+    b = x
+  } else if (hue < 4) {
+    g = x
+    b = c
+  } else if (hue < 5) {
+    r = x
+    b = c
+  } else {
+    r = c
+    b = x
+  }
+
+  const toHex = (val: number) =>
+    Math.round((val + m) * 255)
+      .toString(16)
+      .padStart(2, '0')
+
+  if (alpha < 1) {
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
+  }
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+interface GridCellProps {
+  x: number
+  y: number
+  objects: LevelObject[]
+  isSelected: boolean
+  onClick: () => void
+  onDoubleClick: () => void
+}
+
+function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick }: GridCellProps) {
+  // Find what's at this cell
+  const objectsAtCell = objects.filter((obj) => obj.x === x && obj.y === y)
+
+  // Determine cell appearance
+  let bgColor = 'bg-muted/30'
+  let content: React.ReactNode = null
+  let borderStyle = ''
+
+  for (const obj of objectsAtCell) {
+    if (obj.type === 'Wall') {
+      bgColor = 'bg-slate-700'
+    } else if (obj.type === 'Floor') {
+      bgColor = obj.floorType === 'PlayerButton' ? 'bg-yellow-500/50' : 'bg-green-500/50'
+      content = (
+        <span className="text-[8px] font-bold text-center">
+          {obj.floorType === 'PlayerButton' ? 'PB' : 'B'}
+        </span>
+      )
+    } else if (obj.type === 'Block') {
+      const color = hsvToColor(obj.hue, obj.sat, obj.val)
+      borderStyle = `border-2 border-solid`
+      content = (
+        <div
+          className="absolute inset-0.5 rounded-sm flex items-center justify-center text-[10px] font-bold"
+          style={{ backgroundColor: color }}
+        >
+          {obj.player ? '👤' : obj.id}
+        </div>
+      )
+    } else if (obj.type === 'Ref') {
+      const alpha = obj.exitblock === 1 ? 0.8 : 0.4
+      borderStyle = `border-2 border-dashed`
+      content = (
+        <div
+          className={cn(
+            'absolute inset-0.5 rounded-sm flex items-center justify-center text-[10px] font-bold border-2 border-dashed',
+            obj.exitblock === 1 ? 'border-blue-500' : 'border-blue-300'
+          )}
+          style={{ opacity: alpha }}
+        >
+          →{obj.id}
+        </div>
+      )
+    }
+  }
+
+  return (
+    <div
+      className={cn(
+        'relative aspect-square border border-border/50 cursor-pointer transition-colors',
+        bgColor,
+        borderStyle,
+        isSelected && 'ring-2 ring-primary ring-offset-1'
+      )}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+    >
+      {content}
+      <span className="absolute bottom-0 right-0.5 text-[8px] text-muted-foreground/50">
+        {x},{y}
+      </span>
+    </div>
+  )
+}
+
+export function GridEditor() {
+  const snap = useSnapshot(state)
+  const editingBlock = getEditingBlock()
+
+  const { width, height } = editingBlock
+
+  // Handle cell click
+  const handleCellClick = (x: number, y: number) => {
+    if (snap.tool === 'select') {
+      // Find object at this position and select it
+      const idx = editingBlock.children.findIndex(
+        (obj) => obj.x === x && obj.y === y
+      )
+      if (idx >= 0) {
+        actions.selectObject([idx])
+      } else {
+        actions.clearSelection()
+      }
+    } else {
+      // Add object with current tool
+      actions.addObject(x, y)
+    }
+  }
+
+  // Handle double-click to enter block
+  const handleCellDoubleClick = (x: number, y: number) => {
+    const obj = editingBlock.children.find(
+      (o) => o.x === x && o.y === y && o.type === 'Block'
+    )
+    if (obj && obj.type === 'Block') {
+      actions.enterBlock(obj.id)
+    }
+  }
+
+  // Check if cell at position is selected
+  const isCellSelected = (x: number, y: number) => {
+    if (!snap.selectedPath || snap.selectedPath.length === 0) return false
+    const idx = snap.selectedPath[0]
+    const obj = editingBlock.children[idx]
+    return obj && obj.x === x && obj.y === y
+  }
+
+  // Create grid rows (reversed so y=0 is at bottom)
+  const rows = []
+  for (let y = height - 1; y >= 0; y--) {
+    const cells = []
+    for (let x = 0; x < width; x++) {
+      cells.push(
+        <GridCell
+          key={`${x}-${y}`}
+          x={x}
+          y={y}
+          objects={editingBlock.children as LevelObject[]}
+          isSelected={isCellSelected(x, y)}
+          onClick={() => handleCellClick(x, y)}
+          onDoubleClick={() => handleCellDoubleClick(x, y)}
+        />
+      )
+    }
+    rows.push(
+      <div key={y} className="flex">
+        {cells}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center p-4 bg-background">
+      <div className="mb-2 text-sm text-muted-foreground">
+        Editing: Block {editingBlock.id} ({width}×{height})
+        {editingBlock.id !== 0 && (
+          <button
+            className="ml-2 text-primary underline"
+            onClick={() => actions.exitToParent()}
+          >
+            ← Exit to parent
+          </button>
+        )}
+      </div>
+      <div
+        className="grid gap-0 border border-border rounded-md overflow-hidden"
+        style={{
+          gridTemplateColumns: `repeat(${width}, minmax(32px, 48px))`,
+        }}
+      >
+        {rows.flat()}
+      </div>
+    </div>
+  )
+}

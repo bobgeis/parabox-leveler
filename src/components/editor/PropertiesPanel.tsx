@@ -1,0 +1,363 @@
+/**
+ * Properties Panel - Edit properties of selected object
+ */
+
+import { useSnapshot } from 'valtio'
+import { state, actions, getEditingBlock, getAllBlocks } from '@/store/levelStore'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+
+function NumberInput({
+  label,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+}: {
+  label: string
+  value: number
+  onChange: (v: number) => void
+  min?: number
+  max?: number
+  step?: number
+}) {
+  return (
+    <div className="grid grid-cols-2 items-center gap-2">
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        min={min}
+        max={max}
+        step={step}
+        className="h-7 text-xs"
+      />
+    </div>
+  )
+}
+
+function CheckboxInput({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string
+  checked: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="w-4 h-4"
+      />
+      <Label className="text-xs">{label}</Label>
+    </div>
+  )
+}
+
+function BlockProperties() {
+  const snap = useSnapshot(state)
+  const obj = snap.selectedObject
+
+  if (!obj || obj.type !== 'Block') return null
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium">Block {obj.id}</div>
+
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Position & Size</div>
+        <NumberInput
+          label="X"
+          value={obj.x}
+          onChange={(v) => actions.updateSelectedProperty('x', v)}
+        />
+        <NumberInput
+          label="Y"
+          value={obj.y}
+          onChange={(v) => actions.updateSelectedProperty('y', v)}
+        />
+        <NumberInput
+          label="Width"
+          value={obj.width}
+          onChange={(v) => actions.updateBlockSize(v, obj.height)}
+          min={1}
+        />
+        <NumberInput
+          label="Height"
+          value={obj.height}
+          onChange={(v) => actions.updateBlockSize(obj.width, v)}
+          min={1}
+        />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Color (HSV)</div>
+        <NumberInput
+          label="Hue"
+          value={obj.hue}
+          onChange={(v) => actions.updateBlockColor(v, obj.sat, obj.val)}
+          min={0}
+          max={1}
+          step={0.05}
+        />
+        <NumberInput
+          label="Saturation"
+          value={obj.sat}
+          onChange={(v) => actions.updateBlockColor(obj.hue, v, obj.val)}
+          min={0}
+          max={1}
+          step={0.05}
+        />
+        <NumberInput
+          label="Value"
+          value={obj.val}
+          onChange={(v) => actions.updateBlockColor(obj.hue, obj.sat, v)}
+          min={0}
+          max={1}
+          step={0.05}
+        />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Flags</div>
+        <CheckboxInput
+          label="Player"
+          checked={obj.player === 1}
+          onChange={(v) => actions.updateSelectedProperty('player', v ? 1 : 0)}
+        />
+        <CheckboxInput
+          label="Possessable"
+          checked={obj.possessable === 1}
+          onChange={(v) => actions.updateSelectedProperty('possessable', v ? 1 : 0)}
+        />
+        <NumberInput
+          label="Player Order"
+          value={obj.playerorder}
+          onChange={(v) => actions.updateSelectedProperty('playerorder', v)}
+          min={0}
+        />
+        <NumberInput
+          label="Zoom Factor"
+          value={obj.zoomfactor}
+          onChange={(v) => actions.updateSelectedProperty('zoomfactor', v)}
+          min={0.1}
+          step={0.1}
+        />
+      </div>
+
+      <Separator />
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => actions.enterBlock(obj.id)}
+      >
+        Enter Block
+      </Button>
+    </div>
+  )
+}
+
+function WallProperties() {
+  const snap = useSnapshot(state)
+  const obj = snap.selectedObject
+
+  if (!obj || obj.type !== 'Wall') return null
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium">Wall</div>
+
+      <div className="space-y-2">
+        <NumberInput
+          label="X"
+          value={obj.x}
+          onChange={(v) => actions.updateSelectedProperty('x', v)}
+        />
+        <NumberInput
+          label="Y"
+          value={obj.y}
+          onChange={(v) => actions.updateSelectedProperty('y', v)}
+        />
+      </div>
+    </div>
+  )
+}
+
+function FloorProperties() {
+  const snap = useSnapshot(state)
+  const obj = snap.selectedObject
+
+  if (!obj || obj.type !== 'Floor') return null
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium">Floor</div>
+
+      <div className="space-y-2">
+        <NumberInput
+          label="X"
+          value={obj.x}
+          onChange={(v) => actions.updateSelectedProperty('x', v)}
+        />
+        <NumberInput
+          label="Y"
+          value={obj.y}
+          onChange={(v) => actions.updateSelectedProperty('y', v)}
+        />
+
+        <div className="grid grid-cols-2 items-center gap-2">
+          <Label className="text-xs">Type</Label>
+          <Select
+            value={obj.floorType}
+            onValueChange={(v: string) => actions.updateSelectedProperty('floorType', v as 'Button' | 'PlayerButton')}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Button">Button</SelectItem>
+              <SelectItem value="PlayerButton">PlayerButton</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function RefProperties() {
+  const snap = useSnapshot(state)
+  const obj = snap.selectedObject
+  const blocks = getAllBlocks()
+
+  if (!obj || obj.type !== 'Ref') return null
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium">Reference</div>
+
+      <div className="space-y-2">
+        <NumberInput
+          label="X"
+          value={obj.x}
+          onChange={(v) => actions.updateSelectedProperty('x', v)}
+        />
+        <NumberInput
+          label="Y"
+          value={obj.y}
+          onChange={(v) => actions.updateSelectedProperty('y', v)}
+        />
+
+        <div className="grid grid-cols-2 items-center gap-2">
+          <Label className="text-xs">Target Block</Label>
+          <Select
+            value={String(obj.id)}
+            onValueChange={(v: string) => actions.updateSelectedProperty('id', parseInt(v))}
+          >
+            <SelectTrigger className="h-7 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {blocks.map((b) => (
+                <SelectItem key={b.id} value={String(b.id)}>
+                  {b.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <CheckboxInput
+          label="Exit Reference"
+          checked={obj.exitblock === 1}
+          onChange={(v) => actions.updateSelectedProperty('exitblock', v ? 1 : 0)}
+        />
+      </div>
+    </div>
+  )
+}
+
+function EditingBlockProperties() {
+  const editingBlock = getEditingBlock()
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium">Current Block: {editingBlock.id}</div>
+
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Size</div>
+        <NumberInput
+          label="Width"
+          value={editingBlock.width}
+          onChange={(v) => actions.updateEditingBlockSize(v, editingBlock.height)}
+          min={1}
+        />
+        <NumberInput
+          label="Height"
+          value={editingBlock.height}
+          onChange={(v) => actions.updateEditingBlockSize(editingBlock.width, v)}
+          min={1}
+        />
+      </div>
+    </div>
+  )
+}
+
+export function PropertiesPanel() {
+  const snap = useSnapshot(state)
+
+  return (
+    <div className="w-56 border-l border-border flex flex-col bg-card">
+      <div className="p-2 border-b border-border">
+        <h2 className="text-sm font-semibold">Properties</h2>
+      </div>
+      <ScrollArea className="flex-1">
+        <div className="p-3 space-y-4">
+          {snap.selectedObject ? (
+            <>
+              {snap.selectedObject.type === 'Block' && <BlockProperties />}
+              {snap.selectedObject.type === 'Wall' && <WallProperties />}
+              {snap.selectedObject.type === 'Floor' && <FloorProperties />}
+              {snap.selectedObject.type === 'Ref' && <RefProperties />}
+
+              <Separator />
+
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={() => actions.deleteSelected()}
+              >
+                Delete
+              </Button>
+            </>
+          ) : (
+            <EditingBlockProperties />
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  )
+}
