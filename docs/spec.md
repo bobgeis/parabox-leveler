@@ -66,7 +66,7 @@ The file format is described in the document docs/file-format-notes.md and there
 ### Import/Export
 
 - **Import**: Users can paste level text to load an existing level
-- **Export**: Copy to clipboard or download as `.txt` file
+- **Export**: Copy to clipboard or download as `.txt` file with custom filename
 
 ### Nested Block Editing
 
@@ -99,22 +99,24 @@ The file format is described in the document docs/file-format-notes.md and there
 | Arrow keys / WASD | Move selection to adjacent cell (object or empty) |
 | Alt + Arrow keys / WASD | Move selected object along with selection |
 | Backspace / Delete | Delete selected object |
-| Enter | Enter selected block (if selection is a Block) |
+| Enter | Enter selected Block or Ref; if no selection, select origin (0,0) |
 | Escape | Exit to parent block (if not in root), or clear selection |
 | Z | Undo |
 | Shift+Z | Redo |
-| 1 | Place Block at selected position |
-| 2 | Place Wall at selected position |
-| 3 | Place Floor at selected position |
+| 1 | Place Wall at selected position |
+| 2 | Place Floor at selected position |
+| 3 | Place Block at selected position |
 | 4 | Place Ref at selected position |
 | X | Cut selected object to clipboard |
 | C | Copy selected object to clipboard |
 | V | Paste clipboard at selected position |
 
+**Note:** Keyboard shortcuts are suspended when a modal dialog (e.g., Export) is open.
+
 ### Empty Cell Selection
 
 - Users can select empty cells by clicking or using arrow keys
-- When an empty cell is selected, the Properties Panel shows buttons to create objects (Block, Wall, Floor, Ref)
+- When an empty cell is selected, the Properties Panel shows buttons to create objects: Wall (1), Floor (2), Block (3), Ref (4)
 - This provides a quick way to add objects without switching tools
 - Origin (0,0) is selected by default on load
 
@@ -169,9 +171,9 @@ The editor should warn users about potential issues:
 | width, height | Internal dimensions |
 | hue, sat, val | Color (HSV, 0-1 range) |
 | zoomfactor | Camera zoom (1 = normal) |
-| fillwithwalls | If 1, becomes 1×1 with wall inside |
+| fillwithwalls | If 1, block interior is filled with walls (default: 1) |
 | player | If 1, this is a player |
-| possessable | If 1, player can possess this |
+| possessable | If 1, block is pushable (default: 1) |
 | playerorder | Order for multi-player levels |
 | fliph | Horizontal flip |
 | floatinspace | Block has no parent (deferred) |
@@ -206,7 +208,7 @@ The editor should warn users about potential issues:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Toolbar: [New] [Import] [Export] [Undo] [Redo] [Settings]  │
+│  Toolbar: [New] [Import] [Export] | [Undo] [Redo] | [Cut] [Copy] [Paste] | [Wall] [Floor] [Block] [Ref] | [Settings]  │
 ├─────────────┬───────────────────────────┬───────────────────┤
 │ Tree        │                           │ Properties        │
 │ Explorer    │      Grid Editor          │ Panel             │
@@ -215,9 +217,7 @@ The editor should warn users about potential issues:
 │   - Block1  │                           │  properties)      │
 │   - Wall    │                           │                   │
 │   - ...     │                           │                   │
-├─────────────┴───────────────────────────┴───────────────────┤
-│  Tool Palette: [Select] [Block] [Wall] [Floor] [Ref]        │
-└─────────────────────────────────────────────────────────────┘
+└─────────────┴───────────────────────────┴───────────────────┘
 ```
 
 ---

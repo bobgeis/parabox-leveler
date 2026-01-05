@@ -30,6 +30,12 @@ import {
   Settings,
   AlertTriangle,
   Copy,
+  Scissors,
+  Clipboard,
+  Square,
+  Hash,
+  CircleDot,
+  Link,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -287,6 +293,117 @@ export function Toolbar() {
             </Button>
           </TooltipTrigger>
           <TooltipContent>Redo</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Cut/Copy/Paste */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => actions.cutSelected()}
+            >
+              <Scissors className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Cut (X)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => actions.copySelected()}
+            >
+              <Copy className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Copy (C)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => actions.paste()}
+            >
+              <Clipboard className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Paste (V)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <Separator orientation="vertical" className="h-6" />
+
+      {/* Object creation */}
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => actions.placeObjectAtSelection('wall')}
+            >
+              <Hash className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Wall (1)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => actions.placeObjectAtSelection('floor')}
+            >
+              <CircleDot className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Floor (2)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => actions.placeObjectAtSelection('block')}
+            >
+              <Square className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Block (3)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => actions.placeObjectAtSelection('ref')}
+            >
+              <Link className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Ref (4)</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
