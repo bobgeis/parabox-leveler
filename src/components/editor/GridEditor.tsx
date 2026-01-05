@@ -80,13 +80,66 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick }: GridCel
       )
     } else if (obj.type === 'Block') {
       const color = hsvToColor(obj.hue, obj.sat, obj.val)
+      const darkerColor = hsvToColor(obj.hue, obj.sat, obj.val * 0.6)
       borderStyle = `border-2 border-solid`
+
+      // Render children inside the block as a mini preview
+      const hasChildren = obj.children && obj.children.length > 0
       content = (
         <div
-          className="absolute inset-0.5 rounded-sm flex items-center justify-center text-[10px] font-bold"
+          className="absolute inset-0.5 rounded-sm flex items-center justify-center overflow-hidden"
           style={{ backgroundColor: color }}
         >
-          {obj.player ? '👤' : obj.id}
+          {hasChildren ? (
+            <div
+              className="absolute inset-1 grid"
+              style={{
+                gridTemplateColumns: `repeat(${obj.width}, 1fr)`,
+                gridTemplateRows: `repeat(${obj.height}, 1fr)`,
+                backgroundColor: darkerColor,
+                borderRadius: '2px',
+              }}
+            >
+              {/* Render mini children */}
+              {Array.from({ length: obj.height }).map((_, row) =>
+                Array.from({ length: obj.width }).map((_, col) => {
+                  const cellY = obj.height - 1 - row // Flip Y
+                  const cellX = col
+                  const childrenAtCell = obj.children.filter(
+                    (c) => c.x === cellX && c.y === cellY
+                  )
+                  let cellColor = 'transparent'
+                  for (const child of childrenAtCell) {
+                    if (child.type === 'Wall') {
+                      cellColor = '#334155' // slate-700
+                    } else if (child.type === 'Block') {
+                      cellColor = hsvToColor(child.hue, child.sat, child.val)
+                    } else if (child.type === 'Floor') {
+                      cellColor = child.floorType === 'PlayerButton' ? '#eab30880' : '#22c55e80'
+                    } else if (child.type === 'Ref') {
+                      cellColor = '#3b82f680'
+                    }
+                  }
+                  return (
+                    <div
+                      key={`${cellX}-${cellY}`}
+                      style={{ backgroundColor: cellColor }}
+                    />
+                  )
+                })
+              )}
+            </div>
+          ) : (
+            <span className="text-[10px] font-bold">
+              {obj.player ? '👤' : obj.id}
+            </span>
+          )}
+          {/* Always show ID/player indicator */}
+          {hasChildren && (
+            <span className="absolute bottom-0 right-0.5 text-[8px] font-bold text-white/80 drop-shadow">
+              {obj.player ? '👤' : obj.id}
+            </span>
+          )}
         </div>
       )
     } else if (obj.type === 'Ref') {

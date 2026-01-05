@@ -58,6 +58,13 @@ The file format is described in the document docs/file-format-notes.md and there
 - Users can select child blocks while editing the parent
 - A **tree explorer panel** lists all objects in the level hierarchy for navigation
 
+### Block Preview
+
+- Blocks with children display a **mini preview** of their contents in the grid editor
+- The preview shows a scaled-down grid with Walls, Blocks, Floors, and Refs rendered inside
+- Empty blocks display just their ID or player indicator
+- Blocks with children show the ID/player indicator in the bottom-right corner
+
 ### References (Ref)
 
 - **Exit Reference** (`exitblock=1`): The "real" instance of a block in its parent
