@@ -79,12 +79,33 @@ The file format is described in the document docs/file-format-notes.md and there
 | Escape | Exit to parent block (if not in root), or clear selection |
 | Z | Undo |
 | Shift+Z | Redo |
+| 1 | Place Block at selected position |
+| 2 | Place Wall at selected position |
+| 3 | Place Floor at selected position |
+| 4 | Place Ref at selected position |
+| X | Cut selected object to clipboard |
+| C | Copy selected object to clipboard |
+| V | Paste clipboard at selected position |
 
 ### Empty Cell Selection
 
 - Users can select empty cells by clicking or using arrow keys
 - When an empty cell is selected, the Properties Panel shows buttons to create objects (Block, Wall, Floor, Ref)
 - This provides a quick way to add objects without switching tools
+- Origin (0,0) is selected by default on load
+
+### Clipboard
+
+- X cuts the selected object to clipboard (deletes it)
+- C copies the selected object to clipboard (keeps original)
+- V pastes the clipboard at the selected position
+- When pasting a Block, if the Block ID already exists in the level, a new ID is automatically assigned
+- This also applies recursively to any nested Blocks inside the pasted Block
+
+### Validation
+
+- Level validation checks for orphaned Refs (Refs pointing to non-existent Blocks)
+- If a Block is deleted while Refs still reference it, validation will fail with a warning
 
 ---
 

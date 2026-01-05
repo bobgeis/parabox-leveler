@@ -238,6 +238,41 @@ export function GridEditor() {
             actions.undo()
           }
           break
+
+        // Quick place objects with number keys
+        case '1':
+          e.preventDefault()
+          actions.placeObjectAtSelection('block')
+          break
+        case '2':
+          e.preventDefault()
+          actions.placeObjectAtSelection('wall')
+          break
+        case '3':
+          e.preventDefault()
+          actions.placeObjectAtSelection('floor')
+          break
+        case '4':
+          e.preventDefault()
+          actions.placeObjectAtSelection('ref')
+          break
+
+        // Clipboard operations
+        case 'x':
+        case 'X':
+          e.preventDefault()
+          actions.cutSelected()
+          break
+        case 'c':
+        case 'C':
+          e.preventDefault()
+          actions.copySelected()
+          break
+        case 'v':
+        case 'V':
+          e.preventDefault()
+          actions.paste()
+          break
       }
     }
 

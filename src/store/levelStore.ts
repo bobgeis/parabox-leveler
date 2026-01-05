@@ -32,6 +32,9 @@ interface EditorState {
   // Selected empty cell position (when no object is selected)
   selectedPosition: { x: number; y: number } | null
 
+  // Clipboard for cut/copy/paste
+  clipboard: LevelObject | null
+
   // The block currently being edited (viewing its interior)
   editingBlockId: number
 
@@ -53,12 +56,13 @@ const initialState: EditorState = {
   level: createDefaultLevel(),
   selectedPath: null,
   selectedObject: null,
-  selectedPosition: null,
+  selectedPosition: { x: 0, y: 0 },  // Default to origin
   editingBlockId: 0,
   tool: 'select',
   floorToolType: 'PlayerButton',
   refToolIsExit: true,
   refToolTargetId: 0,
+  clipboard: null,
 }
 
 // Main state proxy
@@ -320,9 +324,12 @@ export const actions = {
   },
 
   deleteSelected: () => {
-    if (!state.selectedPath || state.selectedPath.length === 0) return
+    if (!state.selectedPath || state.selectedPath.length === 0 || !state.selectedObject) return
 
     saveToHistory()  // Save before mutation
+
+    // Save position before deleting
+    const { x, y } = state.selectedObject
 
     const block = getEditingBlock()
     const path = state.selectedPath
@@ -341,8 +348,10 @@ export const actions = {
       parent.children.splice(path[path.length - 1], 1)
     }
 
+    // Keep selection on same square
     state.selectedPath = null
     state.selectedObject = null
+    state.selectedPosition = { x, y }
   },
 
   moveSelected: (dx: number, dy: number) => {
@@ -398,6 +407,139 @@ export const actions = {
   updateHeader: (updates: Partial<Level['header']>) => {
     Object.assign(state.level.header, updates)
   },
+
+  // Clipboard operations
+  copySelected: () => {
+    if (!state.selectedObject) return
+    // Deep clone the object
+    state.clipboard = JSON.parse(JSON.stringify(state.selectedObject))
+  },
+
+  cutSelected: () => {
+    if (!state.selectedObject || !state.selectedPath) return
+    saveToHistory()
+
+    // Save position before deleting
+    const { x, y } = state.selectedObject
+
+    // Deep clone before deleting
+    state.clipboard = JSON.parse(JSON.stringify(state.selectedObject))
+    // Delete the object
+    const block = getEditingBlock()
+    const path = state.selectedPath
+    if (path.length === 1) {
+      block.children.splice(path[0], 1)
+    }
+
+    // Keep selection on same square
+    state.selectedPath = null
+    state.selectedObject = null
+    state.selectedPosition = { x, y }
+  },
+
+  paste: () => {
+    if (!state.clipboard) return
+    // Determine position to paste at
+    let x: number, y: number
+    if (state.selectedPosition) {
+      x = state.selectedPosition.x
+      y = state.selectedPosition.y
+    } else if (state.selectedObject) {
+      x = state.selectedObject.x
+      y = state.selectedObject.y
+    } else {
+      return
+    }
+
+    saveToHistory()
+
+    // Deep clone the clipboard
+    const pasted = JSON.parse(JSON.stringify(state.clipboard)) as LevelObject
+    pasted.x = x
+    pasted.y = y
+
+    // If it's a Block, reassign IDs if they conflict
+    if (pasted.type === 'Block') {
+      reassignBlockIds(pasted, state.level)
+    }
+
+    const block = getEditingBlock()
+    block.children.push(pasted)
+
+    // Select the pasted object
+    const idx = block.children.length - 1
+    state.selectedPath = [idx]
+    state.selectedObject = block.children[idx]
+    state.selectedPosition = null
+  },
+
+  // Quick place object at selected position
+  placeObjectAtSelection: (type: 'block' | 'wall' | 'floor' | 'ref') => {
+    // Get position from selection or selectedPosition
+    let x: number, y: number
+    if (state.selectedPosition) {
+      x = state.selectedPosition.x
+      y = state.selectedPosition.y
+    } else if (state.selectedObject) {
+      x = state.selectedObject.x
+      y = state.selectedObject.y
+    } else {
+      return
+    }
+
+    const block = getEditingBlock()
+
+    // Check for existing objects
+    const existingAtPos = block.children.filter((obj) => obj.x === x && obj.y === y)
+    const hasNonFloor = existingAtPos.some((obj) => obj.type !== 'Floor')
+    const hasFloor = existingAtPos.some((obj) => obj.type === 'Floor')
+
+    if (type === 'floor' && hasFloor) return
+    if (type !== 'floor' && hasNonFloor) return
+
+    saveToHistory()
+
+    let newObj: LevelObject
+    switch (type) {
+      case 'block': {
+        const id = getNextBlockId(state.level)
+        newObj = createBlock(id, x, y, 3, 3)
+        break
+      }
+      case 'wall':
+        newObj = createWall(x, y)
+        break
+      case 'floor':
+        newObj = createFloor(x, y, state.floorToolType)
+        break
+      case 'ref':
+        newObj = createRef(x, y, state.refToolTargetId, state.refToolIsExit)
+        break
+    }
+
+    block.children.push(newObj)
+
+    // Select the new object
+    const idx = block.children.length - 1
+    state.selectedPath = [idx]
+    state.selectedObject = block.children[idx]
+    state.selectedPosition = null
+  },
+}
+
+// Helper to reassign Block IDs to avoid conflicts
+function reassignBlockIds(obj: LevelObject, level: Level) {
+  if (obj.type !== 'Block') return
+
+  // Check if this ID already exists
+  if (findBlockById(level, obj.id)) {
+    obj.id = getNextBlockId(level)
+  }
+
+  // Recursively check children
+  for (const child of obj.children) {
+    reassignBlockIds(child, level)
+  }
 }
 
 // Validation helpers
@@ -409,16 +551,23 @@ export function validateLevel(): string[] {
   let hasPlayer = false
   let hasPlayerButton = false
 
-  function checkObjects(obj: LevelObject) {
+  // Collect all Block IDs and Ref targets
+  const blockIds = new Set<number>()
+  const refTargets: { target: number; location: string }[] = []
+
+  function checkObjects(obj: LevelObject, path: string) {
     if (obj.type === 'Block') {
+      blockIds.add(obj.id)
       if (obj.player === 1) hasPlayer = true
-      obj.children.forEach(checkObjects)
+      obj.children.forEach((child) => checkObjects(child, `${path}Block ${obj.id} > `))
     } else if (obj.type === 'Floor' && obj.floorType === 'PlayerButton') {
       hasPlayerButton = true
+    } else if (obj.type === 'Ref') {
+      refTargets.push({ target: obj.id, location: `${path}Ref at (${obj.x},${obj.y})` })
     }
   }
 
-  checkObjects(level.root)
+  checkObjects(level.root, '')
 
   if (!hasPlayer) {
     warnings.push('Level has no player block (a block with player=1)')
@@ -426,6 +575,13 @@ export function validateLevel(): string[] {
 
   if (!hasPlayerButton) {
     warnings.push('Level has no PlayerButton (goal)')
+  }
+
+  // Check for orphaned Refs (pointing to non-existent Blocks)
+  for (const ref of refTargets) {
+    if (!blockIds.has(ref.target)) {
+      warnings.push(`${ref.location} references non-existent Block ${ref.target}`)
+    }
   }
 
   return warnings
