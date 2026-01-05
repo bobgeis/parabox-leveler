@@ -71,10 +71,17 @@ const initialState: EditorState = {
 // Main state proxy
 export const state = proxy<EditorState>(initialState)
 
-// Custom undo/redo history
+// Custom undo/redo history with selection state
+interface HistoryEntry {
+  level: Level
+  editingBlockId: number
+  selectedPath: number[] | null
+  selectedPosition: { x: number; y: number } | null
+}
+
 interface HistoryState {
-  undoStack: Level[]
-  redoStack: Level[]
+  undoStack: HistoryEntry[]
+  redoStack: HistoryEntry[]
 }
 
 export const historyState = proxy<HistoryState>({
@@ -82,10 +89,15 @@ export const historyState = proxy<HistoryState>({
   redoStack: [],
 })
 
-// Save current level state to undo stack (call before mutations)
+// Save current level and selection state to undo stack (call before mutations)
 function saveToHistory() {
-  const levelSnapshot = JSON.parse(JSON.stringify(snapshot(state).level)) as Level
-  historyState.undoStack.push(levelSnapshot)
+  const entry: HistoryEntry = {
+    level: JSON.parse(JSON.stringify(snapshot(state).level)) as Level,
+    editingBlockId: state.editingBlockId,
+    selectedPath: state.selectedPath ? [...state.selectedPath] : null,
+    selectedPosition: state.selectedPosition ? { ...state.selectedPosition } : null,
+  }
+  historyState.undoStack.push(entry)
   // Clear redo stack when new action is taken
   historyState.redoStack = []
   // Limit history size
@@ -105,27 +117,51 @@ export const actions = {
   undo: () => {
     if (historyState.undoStack.length === 0) return
     // Save current state to redo stack
-    const currentLevel = JSON.parse(JSON.stringify(snapshot(state).level)) as Level
-    historyState.redoStack.push(currentLevel)
+    const currentEntry: HistoryEntry = {
+      level: JSON.parse(JSON.stringify(snapshot(state).level)) as Level,
+      editingBlockId: state.editingBlockId,
+      selectedPath: state.selectedPath ? [...state.selectedPath] : null,
+      selectedPosition: state.selectedPosition ? { ...state.selectedPosition } : null,
+    }
+    historyState.redoStack.push(currentEntry)
     // Restore previous state
-    const previousLevel = historyState.undoStack.pop()!
-    state.level = previousLevel
-    state.selectedPath = null
-    state.selectedObject = null
-    state.selectedPosition = null
+    const previousEntry = historyState.undoStack.pop()!
+    state.level = previousEntry.level
+    state.editingBlockId = previousEntry.editingBlockId
+    state.selectedPath = previousEntry.selectedPath
+    state.selectedPosition = previousEntry.selectedPosition
+    // Update selectedObject based on restored path
+    if (previousEntry.selectedPath && previousEntry.selectedPath.length > 0) {
+      const block = findBlockById(state.level, state.editingBlockId) ?? state.level.root
+      state.selectedObject = block.children[previousEntry.selectedPath[0]] ?? null
+    } else {
+      state.selectedObject = null
+    }
   },
 
   redo: () => {
     if (historyState.redoStack.length === 0) return
     // Save current state to undo stack
-    const currentLevel = JSON.parse(JSON.stringify(snapshot(state).level)) as Level
-    historyState.undoStack.push(currentLevel)
+    const currentEntry: HistoryEntry = {
+      level: JSON.parse(JSON.stringify(snapshot(state).level)) as Level,
+      editingBlockId: state.editingBlockId,
+      selectedPath: state.selectedPath ? [...state.selectedPath] : null,
+      selectedPosition: state.selectedPosition ? { ...state.selectedPosition } : null,
+    }
+    historyState.undoStack.push(currentEntry)
     // Restore next state
-    const nextLevel = historyState.redoStack.pop()!
-    state.level = nextLevel
-    state.selectedPath = null
-    state.selectedObject = null
-    state.selectedPosition = null
+    const nextEntry = historyState.redoStack.pop()!
+    state.level = nextEntry.level
+    state.editingBlockId = nextEntry.editingBlockId
+    state.selectedPath = nextEntry.selectedPath
+    state.selectedPosition = nextEntry.selectedPosition
+    // Update selectedObject based on restored path
+    if (nextEntry.selectedPath && nextEntry.selectedPath.length > 0) {
+      const block = findBlockById(state.level, state.editingBlockId) ?? state.level.root
+      state.selectedObject = block.children[nextEntry.selectedPath[0]] ?? null
+    } else {
+      state.selectedObject = null
+    }
   },
 
   // Level management
