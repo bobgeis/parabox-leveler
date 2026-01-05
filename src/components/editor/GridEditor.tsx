@@ -130,14 +130,14 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick }: GridCel
               )}
             </div>
           ) : (
-            <span className="text-[10px] font-bold">
-              {obj.player ? '👤' : obj.id}
+            <span className="text-[30px] font-bold">
+              {obj.player ? '😶' : obj.id}
             </span>
           )}
           {/* Always show ID/player indicator */}
           {hasChildren && (
             <span className="absolute bottom-0 right-0.5 text-[8px] font-bold text-white/80 drop-shadow">
-              {obj.player ? '👤' : obj.id}
+              {obj.player ? '😶' : obj.id}
             </span>
           )}
         </div>
