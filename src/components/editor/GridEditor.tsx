@@ -309,6 +309,9 @@ export function GridEditor() {
           } else if (selectedObj && selectedObj.type === 'Ref') {
             // Navigate into the referenced block
             actions.enterBlock(selectedObj.id)
+          } else if (!selectedObj && !selectedPos) {
+            // No selection - select origin
+            actions.selectPosition(0, 0)
           }
           break
 
@@ -334,15 +337,15 @@ export function GridEditor() {
         // Quick place objects with number keys
         case '1':
           e.preventDefault()
-          actions.placeObjectAtSelection('block')
+          actions.placeObjectAtSelection('wall')
           break
         case '2':
           e.preventDefault()
-          actions.placeObjectAtSelection('wall')
+          actions.placeObjectAtSelection('floor')
           break
         case '3':
           e.preventDefault()
-          actions.placeObjectAtSelection('floor')
+          actions.placeObjectAtSelection('block')
           break
         case '4':
           e.preventDefault()

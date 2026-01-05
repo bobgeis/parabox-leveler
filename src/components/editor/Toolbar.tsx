@@ -3,8 +3,7 @@
  */
 
 import { useSnapshot } from 'valtio'
-import { state, actions, validateLevel, getAllBlocks, historyState } from '@/store/levelStore'
-import type { Tool } from '@/store/levelStore'
+import { state, actions, validateLevel, historyState } from '@/store/levelStore'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,14 +14,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu'
 import {
   Tooltip,
   TooltipContent,
@@ -36,50 +27,11 @@ import {
   Download,
   Undo2,
   Redo2,
-  MousePointer2,
-  Square,
-  Hash,
-  CircleDot,
-  Link,
   Settings,
   AlertTriangle,
   Copy,
-  ChevronDown,
 } from 'lucide-react'
 import { useState } from 'react'
-
-function ToolButton({
-  tool,
-  currentTool,
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  tool: Tool
-  currentTool: Tool
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant={currentTool === tool ? 'default' : 'outline'}
-            size="sm"
-            onClick={onClick}
-          >
-            <Icon className="w-4 h-4" />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{label}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  )
-}
 
 function ImportDialog() {
   const [open, setOpen] = useState(false)
@@ -286,9 +238,7 @@ function SettingsDialog() {
 }
 
 export function Toolbar() {
-  const snap = useSnapshot(state)
   const historySnap = useSnapshot(historyState)
-  const blocks = getAllBlocks()
 
   // Reactive undo/redo state from history snapshot
   const canUndo = historySnap.undoStack.length > 0
@@ -339,121 +289,6 @@ export function Toolbar() {
           <TooltipContent>Redo</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-
-      <Separator orientation="vertical" className="h-6" />
-
-      {/* Tools */}
-      <ToolButton
-        tool="select"
-        currentTool={snap.tool}
-        icon={MousePointer2}
-        label="Select"
-        onClick={() => actions.setTool('select')}
-      />
-
-      <ToolButton
-        tool="block"
-        currentTool={snap.tool}
-        icon={Square}
-        label="Block"
-        onClick={() => actions.setTool('block')}
-      />
-
-      <ToolButton
-        tool="wall"
-        currentTool={snap.tool}
-        icon={Hash}
-        label="Wall"
-        onClick={() => actions.setTool('wall')}
-      />
-
-      {/* Floor with dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant={snap.tool === 'floor' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => actions.setTool('floor')}
-          >
-            <CircleDot className="w-4 h-4" />
-            <ChevronDown className="w-3 h-3 ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuLabel>Floor Type</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              actions.setFloorToolType('Button')
-              actions.setTool('floor')
-            }}
-          >
-            <CircleDot className="w-4 h-4 mr-2 text-green-500" />
-            Button
-            {snap.floorToolType === 'Button' && ' ✓'}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              actions.setFloorToolType('PlayerButton')
-              actions.setTool('floor')
-            }}
-          >
-            <CircleDot className="w-4 h-4 mr-2 text-yellow-500" />
-            PlayerButton
-            {snap.floorToolType === 'PlayerButton' && ' ✓'}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      {/* Ref with dropdown */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant={snap.tool === 'ref' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => actions.setTool('ref')}
-          >
-            <Link className="w-4 h-4" />
-            <ChevronDown className="w-3 h-3 ml-1" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuLabel>Reference Options</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => {
-              actions.setRefToolIsExit(true)
-              actions.setTool('ref')
-            }}
-          >
-            Exit Reference
-            {snap.refToolIsExit && ' ✓'}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              actions.setRefToolIsExit(false)
-              actions.setTool('ref')
-            }}
-          >
-            Clone Reference
-            {!snap.refToolIsExit && ' ✓'}
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuLabel>Target Block</DropdownMenuLabel>
-          {blocks.map((b) => (
-            <DropdownMenuItem
-              key={b.id}
-              onClick={() => {
-                actions.setRefToolTargetId(b.id)
-                actions.setTool('ref')
-              }}
-            >
-              {b.label}
-              {snap.refToolTargetId === b.id && ' ✓'}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
 
       <div className="flex-1" />
 

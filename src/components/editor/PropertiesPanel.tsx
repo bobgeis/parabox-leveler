@@ -479,30 +479,30 @@ function EmptyPositionPanel() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => actions.createObjectAtPosition('block')}
-        >
-          Block
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
           onClick={() => actions.createObjectAtPosition('wall')}
         >
-          Wall
+          Wall (1)
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => actions.createObjectAtPosition('floor')}
         >
-          Floor
+          Floor (2)
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => actions.createObjectAtPosition('block')}
+        >
+          Block (3)
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => actions.createObjectAtPosition('ref')}
         >
-          Ref
+          Ref (4)
         </Button>
       </div>
     </div>
