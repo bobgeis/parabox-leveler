@@ -69,6 +69,22 @@ The file format is described in the document docs/file-format-notes.md and there
 
 - Full undo/redo support for all editing operations
 
+### Keyboard Controls
+
+| Key | Action |
+|-----|--------|
+| Arrow keys / WASD | Move selection to adjacent cell (object or empty) |
+| Backspace / Delete | Delete selected object |
+| Enter | Enter selected block (if selection is a Block) |
+| Escape | Exit to parent block (if not in root), or clear selection |
+| Z | Undo |
+
+### Empty Cell Selection
+
+- Users can select empty cells by clicking or using arrow keys
+- When an empty cell is selected, the Properties Panel shows buttons to create objects (Block, Wall, Floor, Ref)
+- This provides a quick way to add objects without switching tools
+
 ---
 
 ## Header Options

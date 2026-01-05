@@ -3,7 +3,8 @@
  */
 
 import { useSnapshot } from 'valtio'
-import { state, actions, getEditingBlock, getAllBlocks } from '@/store/levelStore'
+import { state, actions, getAllBlocks, findBlockById } from '@/store/levelStore'
+import type { Level } from '@/types/level'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
@@ -300,14 +301,26 @@ function RefProperties() {
 }
 
 function EditingBlockProperties() {
-  const editingBlock = getEditingBlock()
+  const snap = useSnapshot(state)
+  // Get editing block from snapshot for reactivity
+  const editingBlock = findBlockById(snap.level as Level, snap.editingBlockId) ?? snap.level.root
 
   return (
     <div className="space-y-3">
       <div className="text-sm font-medium">Current Block: {editingBlock.id}</div>
 
       <div className="space-y-2">
-        <div className="text-xs text-muted-foreground">Size</div>
+        <div className="text-xs text-muted-foreground">Position & Size</div>
+        <NumberInput
+          label="X"
+          value={editingBlock.x}
+          onChange={(v) => actions.updateEditingBlockProperty('x', v)}
+        />
+        <NumberInput
+          label="Y"
+          value={editingBlock.y}
+          onChange={(v) => actions.updateEditingBlockProperty('y', v)}
+        />
         <NumberInput
           label="Width"
           value={editingBlock.width}
@@ -320,6 +333,116 @@ function EditingBlockProperties() {
           onChange={(v) => actions.updateEditingBlockSize(editingBlock.width, v)}
           min={1}
         />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Color (HSV)</div>
+        <NumberInput
+          label="Hue"
+          value={editingBlock.hue}
+          onChange={(v) => actions.updateEditingBlockColor(v, editingBlock.sat, editingBlock.val)}
+          min={0}
+          max={1}
+          step={0.05}
+        />
+        <NumberInput
+          label="Saturation"
+          value={editingBlock.sat}
+          onChange={(v) => actions.updateEditingBlockColor(editingBlock.hue, v, editingBlock.val)}
+          min={0}
+          max={1}
+          step={0.05}
+        />
+        <NumberInput
+          label="Value"
+          value={editingBlock.val}
+          onChange={(v) => actions.updateEditingBlockColor(editingBlock.hue, editingBlock.sat, v)}
+          min={0}
+          max={1}
+          step={0.05}
+        />
+      </div>
+
+      <Separator />
+
+      <div className="space-y-2">
+        <div className="text-xs text-muted-foreground">Flags</div>
+        <CheckboxInput
+          label="Player"
+          checked={editingBlock.player === 1}
+          onChange={(v) => actions.updateEditingBlockProperty('player', v ? 1 : 0)}
+        />
+        <CheckboxInput
+          label="Possessable"
+          checked={editingBlock.possessable === 1}
+          onChange={(v) => actions.updateEditingBlockProperty('possessable', v ? 1 : 0)}
+        />
+        <CheckboxInput
+          label="Player Order"
+          checked={editingBlock.playerorder === 1}
+          onChange={(v) => actions.updateEditingBlockProperty('playerorder', v ? 1 : 0)}
+        />
+        <CheckboxInput
+          label="Flip Horizontal"
+          checked={editingBlock.fliph === 1}
+          onChange={(v) => actions.updateEditingBlockProperty('fliph', v ? 1 : 0)}
+        />
+        <CheckboxInput
+          label="Float in Space"
+          checked={editingBlock.floatinspace === 1}
+          onChange={(v) => actions.updateEditingBlockProperty('floatinspace', v ? 1 : 0)}
+        />
+        <CheckboxInput
+          label="Special Effect"
+          checked={editingBlock.specialeffect === 1}
+          onChange={(v) => actions.updateEditingBlockProperty('specialeffect', v ? 1 : 0)}
+        />
+      </div>
+    </div>
+  )
+}
+
+function EmptyPositionPanel() {
+  const snap = useSnapshot(state)
+  const pos = snap.selectedPosition
+
+  if (!pos) return null
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium">Empty Cell ({pos.x}, {pos.y})</div>
+      <div className="text-xs text-muted-foreground">Create an object:</div>
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => actions.createObjectAtPosition('block')}
+        >
+          Block
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => actions.createObjectAtPosition('wall')}
+        >
+          Wall
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => actions.createObjectAtPosition('floor')}
+        >
+          Floor
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => actions.createObjectAtPosition('ref')}
+        >
+          Ref
+        </Button>
       </div>
     </div>
   )
@@ -353,6 +476,8 @@ export function PropertiesPanel() {
                 Delete
               </Button>
             </>
+          ) : snap.selectedPosition ? (
+            <EmptyPositionPanel />
           ) : (
             <EditingBlockProperties />
           )}

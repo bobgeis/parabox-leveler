@@ -28,12 +28,12 @@ function TreeNode({ object, path, depth }: TreeNodeProps) {
   const hasChildren = object.type === 'Block' && object.children.length > 0
 
   const handleClick = () => {
-    actions.selectObject(path)
-  }
-
-  const handleDoubleClick = () => {
     if (object.type === 'Block') {
+      // Single click on block enters it
       actions.enterBlock(object.id)
+    } else {
+      // Single click on other objects selects them
+      actions.selectObject(path)
     }
   }
 
@@ -74,7 +74,6 @@ function TreeNode({ object, path, depth }: TreeNodeProps) {
         )}
         style={{ paddingLeft: `${depth * 12 + 4}px` }}
         onClick={handleClick}
-        onDoubleClick={handleDoubleClick}
       >
         {hasChildren ? (
           <button onClick={toggleExpand} className="p-0.5">

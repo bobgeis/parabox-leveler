@@ -3,7 +3,7 @@
  */
 
 import { useSnapshot } from 'valtio'
-import { state, actions, validateLevel, getAllBlocks } from '@/store/levelStore'
+import { state, actions, validateLevel, getAllBlocks, editorState } from '@/store/levelStore'
 import type { Tool } from '@/store/levelStore'
 import { Button } from '@/components/ui/button'
 import {
@@ -269,7 +269,12 @@ function SettingsDialog() {
 
 export function Toolbar() {
   const snap = useSnapshot(state)
+  const historySnap = useSnapshot(editorState)
   const blocks = getAllBlocks()
+
+  // Reactive undo/redo state from history snapshot
+  const canUndo = historySnap.history.index > 0
+  const canRedo = historySnap.history.index < historySnap.history.nodes.length - 1
 
   return (
     <div className="h-12 border-b border-border bg-card flex items-center px-2 gap-2">
@@ -292,12 +297,12 @@ export function Toolbar() {
               variant="outline"
               size="sm"
               onClick={() => actions.undo()}
-              disabled={!actions.canUndo()}
+              disabled={!canUndo}
             >
               <Undo2 className="w-4 h-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Undo</TooltipContent>
+          <TooltipContent>Undo (Z)</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
@@ -308,7 +313,7 @@ export function Toolbar() {
               variant="outline"
               size="sm"
               onClick={() => actions.redo()}
-              disabled={!actions.canRedo()}
+              disabled={!canRedo}
             >
               <Redo2 className="w-4 h-4" />
             </Button>

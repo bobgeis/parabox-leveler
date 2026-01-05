@@ -2,6 +2,7 @@
  * Grid Editor - Main visual editing area for placing objects
  */
 
+import { useEffect } from 'react'
 import { useSnapshot } from 'valtio'
 import { state, actions, findBlockById } from '@/store/levelStore'
 import type { Level, LevelObject } from '@/types/level'
@@ -134,15 +135,123 @@ export function GridEditor() {
 
   const { width, height } = editingBlock
 
-  // Handle cell click
+  // Keyboard controls
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input field
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+
+      const block = findBlockById(state.level, state.editingBlockId) ?? state.level.root
+      const selectedPath = state.selectedPath
+      const selectedObj = selectedPath && selectedPath.length > 0
+        ? block.children[selectedPath[0]]
+        : null
+
+      // Get current position (from selected object or selected position)
+      const selectedPos = state.selectedPosition
+      const currentX = selectedObj?.x ?? selectedPos?.x ?? 0
+      const currentY = selectedObj?.y ?? selectedPos?.y ?? 0
+
+      // Helper to select object at position or empty position
+      const selectAtPosition = (x: number, y: number) => {
+        const idx = block.children.findIndex((obj) => obj.x === x && obj.y === y)
+        if (idx >= 0) {
+          actions.selectObject([idx])
+        } else {
+          actions.selectPosition(x, y)
+        }
+      }
+
+      switch (e.key) {
+        case 'ArrowUp':
+        case 'w':
+        case 'W':
+          e.preventDefault()
+          if (selectedObj || selectedPos) {
+            const newY = Math.min(currentY + 1, block.height - 1)
+            selectAtPosition(currentX, newY)
+          }
+          break
+
+        case 'ArrowDown':
+        case 's':
+        case 'S':
+          e.preventDefault()
+          if (selectedObj || selectedPos) {
+            const newY = Math.max(currentY - 1, 0)
+            selectAtPosition(currentX, newY)
+          }
+          break
+
+        case 'ArrowLeft':
+        case 'a':
+        case 'A':
+          e.preventDefault()
+          if (selectedObj || selectedPos) {
+            const newX = Math.max(currentX - 1, 0)
+            selectAtPosition(newX, currentY)
+          }
+          break
+
+        case 'ArrowRight':
+        case 'd':
+        case 'D':
+          e.preventDefault()
+          if (selectedObj || selectedPos) {
+            const newX = Math.min(currentX + 1, block.width - 1)
+            selectAtPosition(newX, currentY)
+          }
+          break
+
+        case 'Backspace':
+        case 'Delete':
+          e.preventDefault()
+          if (selectedObj) {
+            actions.deleteSelected()
+          }
+          break
+
+        case 'Enter':
+          e.preventDefault()
+          if (selectedObj && selectedObj.type === 'Block') {
+            actions.enterBlock(selectedObj.id)
+          }
+          break
+
+        case 'Escape':
+          e.preventDefault()
+          if (state.editingBlockId !== 0) {
+            actions.exitToParent()
+          } else {
+            actions.clearSelection()
+          }
+          break
+
+        case 'z':
+        case 'Z':
+          e.preventDefault()
+          actions.undo()
+          break
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  // Handle cell click - read state.tool directly to avoid stale closure
   const handleCellClick = (x: number, y: number) => {
-    if (snap.tool === 'select') {
-      // Find object at this position and select it
-      const idx = children.findIndex((obj) => obj.x === x && obj.y === y)
+    if (state.tool === 'select') {
+      // Find object at this position and select it, or select empty position
+      const block = findBlockById(state.level, state.editingBlockId) ?? state.level.root
+      const idx = block.children.findIndex((obj) => obj.x === x && obj.y === y)
       if (idx >= 0) {
         actions.selectObject([idx])
       } else {
-        actions.clearSelection()
+        // Select empty position instead of clearing
+        actions.selectPosition(x, y)
       }
     } else {
       // Add object with current tool
@@ -158,12 +267,19 @@ export function GridEditor() {
     }
   }
 
-  // Check if cell at position is selected
+  // Check if cell at position is selected (object or empty position)
   const isCellSelected = (x: number, y: number) => {
-    if (!snap.selectedPath || snap.selectedPath.length === 0) return false
-    const idx = snap.selectedPath[0]
-    const obj = children[idx]
-    return obj && obj.x === x && obj.y === y
+    // Check if an object at this position is selected
+    if (snap.selectedPath && snap.selectedPath.length > 0) {
+      const idx = snap.selectedPath[0]
+      const obj = children[idx]
+      if (obj && obj.x === x && obj.y === y) return true
+    }
+    // Check if this empty position is selected
+    if (snap.selectedPosition && snap.selectedPosition.x === x && snap.selectedPosition.y === y) {
+      return true
+    }
+    return false
   }
 
   // Create grid cells (y reversed so y=0 is at bottom)
@@ -198,10 +314,10 @@ export function GridEditor() {
         )}
       </div>
       <div
-        className="grid border border-border rounded-md overflow-hidden"
+        className="grid border border-border rounded-md p-0.5"
         style={{
-          gridTemplateColumns: `repeat(${width}, 40px)`,
-          gridTemplateRows: `repeat(${height}, 40px)`,
+          gridTemplateColumns: `repeat(${width}, 56px)`,
+          gridTemplateRows: `repeat(${height}, 56px)`,
         }}
       >
         {cells}

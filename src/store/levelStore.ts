@@ -29,6 +29,9 @@ interface EditorState {
   // Currently selected object (derived, but stored for convenience)
   selectedObject: LevelObject | null
 
+  // Selected empty cell position (when no object is selected)
+  selectedPosition: { x: number; y: number } | null
+
   // The block currently being edited (viewing its interior)
   editingBlockId: number
 
@@ -50,6 +53,7 @@ const initialState: EditorState = {
   level: createDefaultLevel(),
   selectedPath: null,
   selectedObject: null,
+  selectedPosition: null,
   editingBlockId: 0,
   tool: 'select',
   floorToolType: 'PlayerButton',
@@ -59,8 +63,11 @@ const initialState: EditorState = {
 
 export const editorState = proxyWithHistory(initialState)
 
-// Convenience accessors
+// Export the value proxy for useSnapshot - this is the reactive state
 export const state = editorState.value
+
+// Also export editorState for direct access if needed
+export { editorState as historyState }
 
 // Get the block currently being edited
 export function getEditingBlock(): Block {
@@ -155,6 +162,7 @@ export const actions = {
   // Selection
   selectObject: (path: number[] | null) => {
     state.selectedPath = path
+    state.selectedPosition = null  // Clear empty position selection
     if (path === null) {
       state.selectedObject = null
       return
@@ -176,6 +184,51 @@ export const actions = {
   clearSelection: () => {
     state.selectedPath = null
     state.selectedObject = null
+    state.selectedPosition = null
+  },
+
+  // Select an empty position (no object there)
+  selectPosition: (x: number, y: number) => {
+    state.selectedPath = null
+    state.selectedObject = null
+    state.selectedPosition = { x, y }
+  },
+
+  // Create object at selected position
+  createObjectAtPosition: (type: 'block' | 'wall' | 'floor' | 'ref') => {
+    if (!state.selectedPosition) return
+    const { x, y } = state.selectedPosition
+    const block = getEditingBlock()
+
+    switch (type) {
+      case 'block': {
+        const id = getNextBlockId(state.level)
+        const newBlock = createBlock(id, x, y, 3, 3)
+        block.children.push(newBlock)
+        break
+      }
+      case 'wall': {
+        const wall = createWall(x, y)
+        block.children.push(wall)
+        break
+      }
+      case 'floor': {
+        const floor = createFloor(x, y, state.floorToolType)
+        block.children.push(floor)
+        break
+      }
+      case 'ref': {
+        const ref = createRef(x, y, state.refToolTargetId, state.refToolIsExit)
+        block.children.push(ref)
+        break
+      }
+    }
+
+    // Select the newly created object
+    const idx = block.children.length - 1
+    state.selectedPath = [idx]
+    state.selectedObject = block.children[idx]
+    state.selectedPosition = null
   },
 
   // Object manipulation
@@ -279,6 +332,20 @@ export const actions = {
     const block = getEditingBlock()
     block.width = width
     block.height = height
+  },
+
+  // Update editing block property
+  updateEditingBlockProperty: (key: string, value: unknown) => {
+    const block = getEditingBlock()
+    ;(block as Record<string, unknown>)[key] = value
+  },
+
+  // Update editing block color
+  updateEditingBlockColor: (hue: number, sat: number, val: number) => {
+    const block = getEditingBlock()
+    block.hue = hue
+    block.sat = sat
+    block.val = val
   },
 
   // Header updates
