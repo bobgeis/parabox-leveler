@@ -141,6 +141,18 @@ function BlockProperties() {
 
       <div className="space-y-2">
         <div className="text-xs text-muted-foreground">Flags</div>
+        <NumberInput
+          label="Zoom Factor"
+          value={obj.zoomfactor}
+          onChange={(v) => actions.updateSelectedProperty('zoomfactor', v)}
+          min={0.1}
+          step={0.1}
+        />
+        <CheckboxInput
+          label="Fill With Walls"
+          checked={obj.fillwithwalls === 1}
+          onChange={(v) => actions.updateSelectedProperty('fillwithwalls', v ? 1 : 0)}
+        />
         <CheckboxInput
           label="Player"
           checked={obj.player === 1}
@@ -156,13 +168,6 @@ function BlockProperties() {
           value={obj.playerorder}
           onChange={(v) => actions.updateSelectedProperty('playerorder', v)}
           min={0}
-        />
-        <NumberInput
-          label="Zoom Factor"
-          value={obj.zoomfactor}
-          onChange={(v) => actions.updateSelectedProperty('zoomfactor', v)}
-          min={0.1}
-          step={0.1}
         />
         <CheckboxInput
           label="Flip Horizontal"

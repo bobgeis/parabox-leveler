@@ -100,7 +100,7 @@ export function createBlock(
     zoomfactor: 1,
     fillwithwalls: 1,
     player: 0,
-    possessable: 1,
+    possessable: 0,
     playerorder: 0,
     fliph: 0,
     floatinspace: 0,

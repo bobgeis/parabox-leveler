@@ -61,7 +61,7 @@ const initialState: EditorState = {
   selectedPosition: { x: 0, y: 0 },  // Default to origin
   editingBlockId: 0,
   tool: 'select',
-  floorToolType: 'PlayerButton',
+  floorToolType: 'Button',
   refToolIsExit: true,
   refToolTargetId: 0,
   clipboard: null,
