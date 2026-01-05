@@ -85,7 +85,7 @@ export function createBlock(
   y: number,
   width: number = 5,
   height: number = 5,
-  options: Partial<Block> = {}
+  options: Partial<Block> = {},
 ): Block {
   return {
     type: 'Block',
@@ -148,7 +148,7 @@ export function createRef(
   x: number,
   y: number,
   targetId: number,
-  isExit: boolean = true
+  isExit: boolean = true,
 ): Ref {
   return {
     type: 'Ref',
@@ -172,7 +172,7 @@ export function createRef(
 
 // Create a default empty level
 export function createDefaultLevel(): Level {
-  const root = createBlock(0, -1, -1, 5, 5)
+  const root = createBlock(0, -1, -1, 5, 5, { fillwithwalls: 0 })
   const player = createPlayerBlock(1, 1, 1)
   const goal = createFloor(3, 3, 'PlayerButton')
   root.children = [player, goal]
