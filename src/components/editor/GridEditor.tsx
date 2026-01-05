@@ -232,7 +232,11 @@ export function GridEditor() {
         case 'z':
         case 'Z':
           e.preventDefault()
-          actions.undo()
+          if (e.shiftKey) {
+            actions.redo()
+          } else {
+            actions.undo()
+          }
           break
       }
     }

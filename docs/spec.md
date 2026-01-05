@@ -78,6 +78,7 @@ The file format is described in the document docs/file-format-notes.md and there
 | Enter | Enter selected block (if selection is a Block) |
 | Escape | Exit to parent block (if not in root), or clear selection |
 | Z | Undo |
+| Shift+Z | Redo |
 
 ### Empty Cell Selection
 

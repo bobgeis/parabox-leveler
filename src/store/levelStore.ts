@@ -2,7 +2,7 @@
  * Valtio state store for level editing with undo/redo support
  */
 
-import { proxyWithHistory } from 'valtio-history'
+import { proxy, snapshot } from 'valtio'
 import type { Level, LevelObject, Block } from '@/types/level'
 import {
   createDefaultLevel,
@@ -48,7 +48,7 @@ interface EditorState {
   refToolTargetId: number
 }
 
-// Create the state with history support
+// Create the state
 const initialState: EditorState = {
   level: createDefaultLevel(),
   selectedPath: null,
@@ -61,13 +61,31 @@ const initialState: EditorState = {
   refToolTargetId: 0,
 }
 
-export const editorState = proxyWithHistory(initialState)
+// Main state proxy
+export const state = proxy<EditorState>(initialState)
 
-// Export the value proxy for useSnapshot - this is the reactive state
-export const state = editorState.value
+// Custom undo/redo history
+interface HistoryState {
+  undoStack: Level[]
+  redoStack: Level[]
+}
 
-// Also export editorState for direct access if needed
-export { editorState as historyState }
+export const historyState = proxy<HistoryState>({
+  undoStack: [],
+  redoStack: [],
+})
+
+// Save current level state to undo stack (call before mutations)
+function saveToHistory() {
+  const levelSnapshot = JSON.parse(JSON.stringify(snapshot(state).level)) as Level
+  historyState.undoStack.push(levelSnapshot)
+  // Clear redo stack when new action is taken
+  historyState.redoStack = []
+  // Limit history size
+  if (historyState.undoStack.length > 50) {
+    historyState.undoStack.shift()
+  }
+}
 
 // Get the block currently being edited
 export function getEditingBlock(): Block {
@@ -77,10 +95,31 @@ export function getEditingBlock(): Block {
 // Actions
 export const actions = {
   // Undo/Redo
-  undo: () => editorState.undo(),
-  redo: () => editorState.redo(),
-  canUndo: () => editorState.canUndo(),
-  canRedo: () => editorState.canRedo(),
+  undo: () => {
+    if (historyState.undoStack.length === 0) return
+    // Save current state to redo stack
+    const currentLevel = JSON.parse(JSON.stringify(snapshot(state).level)) as Level
+    historyState.redoStack.push(currentLevel)
+    // Restore previous state
+    const previousLevel = historyState.undoStack.pop()!
+    state.level = previousLevel
+    state.selectedPath = null
+    state.selectedObject = null
+    state.selectedPosition = null
+  },
+
+  redo: () => {
+    if (historyState.redoStack.length === 0) return
+    // Save current state to undo stack
+    const currentLevel = JSON.parse(JSON.stringify(snapshot(state).level)) as Level
+    historyState.undoStack.push(currentLevel)
+    // Restore next state
+    const nextLevel = historyState.redoStack.pop()!
+    state.level = nextLevel
+    state.selectedPath = null
+    state.selectedObject = null
+    state.selectedPosition = null
+  },
 
   // Level management
   newLevel: () => {
@@ -197,6 +236,9 @@ export const actions = {
   // Create object at selected position
   createObjectAtPosition: (type: 'block' | 'wall' | 'floor' | 'ref') => {
     if (!state.selectedPosition) return
+
+    saveToHistory()  // Save before mutation
+
     const { x, y } = state.selectedPosition
     const block = getEditingBlock()
 
@@ -250,6 +292,8 @@ export const actions = {
     // If placing non-floor and there's already a non-floor object, don't allow
     if (tool !== 'floor' && hasNonFloor) return
 
+    saveToHistory()  // Save before mutation
+
     switch (tool) {
       case 'block': {
         const id = getNextBlockId(state.level)
@@ -277,6 +321,8 @@ export const actions = {
 
   deleteSelected: () => {
     if (!state.selectedPath || state.selectedPath.length === 0) return
+
+    saveToHistory()  // Save before mutation
 
     const block = getEditingBlock()
     const path = state.selectedPath
