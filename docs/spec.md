@@ -41,6 +41,22 @@ The file format is described in the document docs/file-format-notes.md and there
    - **Floor** - buttons (Button, PlayerButton)
    - **Ref** - reference to another block (exit or clone)
 
+### Block Properties
+
+- Position (x, y), Size (width, height)
+- Color (hue, sat, val)
+- Player flag, Possessable flag
+- Player Order, Zoom Factor
+- **Flip Horizontal** (fliph) - mirrors the block horizontally
+
+### Ref Properties
+
+- Position (x, y)
+- Target Block ID
+- Exit Reference flag (exitblock)
+- **Infinite Exit** (infexit, infexitnum) - for recursive exit references
+- **Infinite Enter** (infenter, infenternum, infenterid) - for recursive enter references
+
 ### Block IDs
 
 - Block IDs are **auto-assigned** sequentially (root=0, then 1, 2, 3...)
@@ -81,6 +97,7 @@ The file format is described in the document docs/file-format-notes.md and there
 | Key | Action |
 |-----|--------|
 | Arrow keys / WASD | Move selection to adjacent cell (object or empty) |
+| Alt + Arrow keys / WASD | Move selected object along with selection |
 | Backspace / Delete | Delete selected object |
 | Enter | Enter selected block (if selection is a Block) |
 | Escape | Exit to parent block (if not in root), or clear selection |

@@ -217,12 +217,34 @@ export function GridEditor() {
         }
       }
 
+      // Helper to check if target position is empty (no non-Floor object)
+      const canMoveTo = (x: number, y: number) => {
+        const atTarget = block.children.filter((obj) => obj.x === x && obj.y === y)
+        return !atTarget.some((obj) => obj.type !== 'Floor')
+      }
+
+      // Helper to move selected object with Alt key
+      const moveWithAlt = (dx: number, dy: number) => {
+        if (!selectedObj) return false
+        const newX = selectedObj.x + dx
+        const newY = selectedObj.y + dy
+        // Check bounds
+        if (newX < 0 || newX >= block.width || newY < 0 || newY >= block.height) return false
+        // Check if target is empty
+        if (!canMoveTo(newX, newY)) return false
+        // Move the object
+        actions.moveSelectedWithHistory(dx, dy)
+        return true
+      }
+
       switch (e.key) {
         case 'ArrowUp':
         case 'w':
         case 'W':
           e.preventDefault()
-          if (selectedObj || selectedPos) {
+          if (e.altKey && selectedObj) {
+            moveWithAlt(0, 1)
+          } else if (selectedObj || selectedPos) {
             const newY = Math.min(currentY + 1, block.height - 1)
             selectAtPosition(currentX, newY)
           }
@@ -232,7 +254,9 @@ export function GridEditor() {
         case 's':
         case 'S':
           e.preventDefault()
-          if (selectedObj || selectedPos) {
+          if (e.altKey && selectedObj) {
+            moveWithAlt(0, -1)
+          } else if (selectedObj || selectedPos) {
             const newY = Math.max(currentY - 1, 0)
             selectAtPosition(currentX, newY)
           }
@@ -242,7 +266,9 @@ export function GridEditor() {
         case 'a':
         case 'A':
           e.preventDefault()
-          if (selectedObj || selectedPos) {
+          if (e.altKey && selectedObj) {
+            moveWithAlt(-1, 0)
+          } else if (selectedObj || selectedPos) {
             const newX = Math.max(currentX - 1, 0)
             selectAtPosition(newX, currentY)
           }
@@ -252,7 +278,9 @@ export function GridEditor() {
         case 'd':
         case 'D':
           e.preventDefault()
-          if (selectedObj || selectedPos) {
+          if (e.altKey && selectedObj) {
+            moveWithAlt(1, 0)
+          } else if (selectedObj || selectedPos) {
             const newX = Math.min(currentX + 1, block.width - 1)
             selectAtPosition(newX, currentY)
           }

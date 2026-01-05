@@ -164,6 +164,11 @@ function BlockProperties() {
           min={0.1}
           step={0.1}
         />
+        <CheckboxInput
+          label="Flip Horizontal"
+          checked={obj.fliph === 1}
+          onChange={(v) => actions.updateSelectedProperty('fliph', v ? 1 : 0)}
+        />
       </div>
 
       <Separator />
@@ -294,6 +299,39 @@ function RefProperties() {
           label="Exit Reference"
           checked={obj.exitblock === 1}
           onChange={(v) => actions.updateSelectedProperty('exitblock', v ? 1 : 0)}
+        />
+
+        <Separator className="my-2" />
+        <div className="text-xs text-muted-foreground">Infinite Exit</div>
+
+        <CheckboxInput
+          label="Inf Exit"
+          checked={obj.infexit === 1}
+          onChange={(v) => actions.updateSelectedProperty('infexit', v ? 1 : 0)}
+        />
+        <NumberInput
+          label="Inf Exit Num"
+          value={obj.infexitnum}
+          onChange={(v) => actions.updateSelectedProperty('infexitnum', v)}
+        />
+
+        <Separator className="my-2" />
+        <div className="text-xs text-muted-foreground">Infinite Enter</div>
+
+        <CheckboxInput
+          label="Inf Enter"
+          checked={obj.infenter === 1}
+          onChange={(v) => actions.updateSelectedProperty('infenter', v ? 1 : 0)}
+        />
+        <NumberInput
+          label="Inf Enter Num"
+          value={obj.infenternum}
+          onChange={(v) => actions.updateSelectedProperty('infenternum', v)}
+        />
+        <NumberInput
+          label="Inf Enter ID"
+          value={obj.infenterid}
+          onChange={(v) => actions.updateSelectedProperty('infenterid', v)}
         />
       </div>
     </div>

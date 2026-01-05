@@ -360,6 +360,13 @@ export const actions = {
     state.selectedObject.y += dy
   },
 
+  moveSelectedWithHistory: (dx: number, dy: number) => {
+    if (!state.selectedObject) return
+    saveToHistory()
+    state.selectedObject.x += dx
+    state.selectedObject.y += dy
+  },
+
   // Update object properties
   updateSelectedProperty: (key: string, value: unknown) => {
     if (!state.selectedObject) return
