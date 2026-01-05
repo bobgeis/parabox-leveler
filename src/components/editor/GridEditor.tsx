@@ -191,8 +191,11 @@ export function GridEditor() {
   // Keyboard controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in an input field
+      // Ignore if typing in an input field or modal is open
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return
+      }
+      if (state.modalOpen) {
         return
       }
 
@@ -303,6 +306,9 @@ export function GridEditor() {
             } else {
               actions.enterBlock(selectedObj.id)
             }
+          } else if (selectedObj && selectedObj.type === 'Ref') {
+            // Navigate into the referenced block
+            actions.enterBlock(selectedObj.id)
           }
           break
 

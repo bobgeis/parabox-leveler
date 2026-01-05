@@ -141,8 +141,14 @@ Block -1 -1 0 5 5 0.6 0.8 1 1 0 0 0 0 0 0 0
 function ExportDialog() {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [filename, setFilename] = useState('level')
   const levelText = actions.exportLevel()
   const warnings = validateLevel()
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    actions.setModalOpen(isOpen)
+  }
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(levelText)
@@ -155,20 +161,20 @@ function ExportDialog() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'level.txt'
+    a.download = `${filename || 'level'}.txt`
     a.click()
     URL.revokeObjectURL(url)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Download className="w-4 h-4 mr-1" />
           Export
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Export Level</DialogTitle>
           <DialogDescription>
@@ -191,20 +197,32 @@ function ExportDialog() {
         )}
 
         <textarea
-          className="w-full h-64 p-2 border rounded-md font-mono text-xs bg-muted"
+          className="w-full h-64 p-2 border rounded-md font-mono text-xs bg-muted overflow-x-auto whitespace-pre"
           value={levelText}
           readOnly
         />
-        <DialogFooter>
-          <Button variant="outline" onClick={handleCopy}>
+        <div className="flex flex-col gap-3 mt-2">
+          <Button variant="outline" onClick={handleCopy} className="w-full">
             <Copy className="w-4 h-4 mr-1" />
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? 'Copied!' : 'Copy to Clipboard'}
           </Button>
-          <Button onClick={handleDownload}>
-            <Download className="w-4 h-4 mr-1" />
-            Download
-          </Button>
-        </DialogFooter>
+          <div className="flex items-center gap-2">
+            <label htmlFor="filename" className="text-sm whitespace-nowrap">Filename:</label>
+            <input
+              id="filename"
+              type="text"
+              className="flex-1 px-2 py-1 text-sm border rounded-md min-w-0"
+              value={filename}
+              onChange={(e) => setFilename(e.target.value)}
+              placeholder="level"
+            />
+            <span className="text-sm text-muted-foreground">.txt</span>
+            <Button onClick={handleDownload} className="shrink-0">
+              <Download className="w-4 h-4 mr-1" />
+              Download
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   )

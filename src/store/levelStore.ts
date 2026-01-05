@@ -49,6 +49,8 @@ interface EditorState {
 
   // Target block ID for ref tool
   refToolTargetId: number
+  // Modal open state (suspends keyboard shortcuts)
+  modalOpen: boolean
 }
 
 // Create the state
@@ -63,6 +65,7 @@ const initialState: EditorState = {
   refToolIsExit: true,
   refToolTargetId: 0,
   clipboard: null,
+  modalOpen: false,
 }
 
 // Main state proxy
@@ -165,6 +168,10 @@ export const actions = {
 
   setRefToolTargetId: (id: number) => {
     state.refToolTargetId = id
+  },
+
+  setModalOpen: (open: boolean) => {
+    state.modalOpen = open
   },
 
   // Navigation
