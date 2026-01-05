@@ -297,7 +297,12 @@ export function GridEditor() {
         case 'Enter':
           e.preventDefault()
           if (selectedObj && selectedObj.type === 'Block') {
-            actions.enterBlock(selectedObj.id)
+            // If we're viewing this block's contents (from tree click), select origin
+            if (selectedObj.id === state.editingBlockId) {
+              actions.selectPosition(0, 0)
+            } else {
+              actions.enterBlock(selectedObj.id)
+            }
           }
           break
 

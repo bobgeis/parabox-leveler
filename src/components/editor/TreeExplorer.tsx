@@ -29,8 +29,8 @@ function TreeNode({ object, path, depth }: TreeNodeProps) {
 
   const handleClick = () => {
     if (object.type === 'Block') {
-      // Single click on block enters it
-      actions.enterBlock(object.id)
+      // Single click on block enters it and shows its properties
+      actions.enterBlockFromTree(object.id)
     } else {
       // Single click on other objects selects them
       actions.selectObject(path)
@@ -121,16 +121,16 @@ export function TreeExplorer() {
               'flex items-center gap-1 px-1 py-0.5 cursor-pointer rounded hover:bg-accent',
               snap.editingBlockId === 0 && 'font-semibold'
             )}
-            onClick={() => actions.enterBlock(0)}
+            onClick={() => actions.enterBlockFromTree(0)}
           >
             <Square className="w-3 h-3 text-blue-500" />
             <span className="text-xs">Root (Block 0)</span>
           </div>
           {/* Root's children */}
-          {snap.level.root.children.map((child: LevelObject, idx: number) => (
+          {(snap.level.root.children as readonly LevelObject[]).map((child, idx) => (
             <TreeNode
               key={idx}
-              object={child}
+              object={child as LevelObject}
               path={[idx]}
               depth={1}
             />

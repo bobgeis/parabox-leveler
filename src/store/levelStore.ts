@@ -174,11 +174,30 @@ export const actions = {
       state.editingBlockId = blockId
       state.selectedPath = null
       state.selectedObject = null
+      state.selectedPosition = { x: 0, y: 0 }  // Select origin when entering
     }
+  },
+
+  // Enter block from tree - show block properties, no internal selection
+  enterBlockFromTree: (blockId: number) => {
+    const block = findBlockById(state.level, blockId)
+    if (block) {
+      state.editingBlockId = blockId
+      state.selectedPath = null
+      state.selectedObject = block  // Select the block itself to show properties
+      state.selectedPosition = null
+    }
+  },
+
+  // Header property updates
+  updateHeaderProperty: (key: string, value: unknown) => {
+    (state.level.header as unknown as Record<string, unknown>)[key] = value
   },
 
   exitToParent: () => {
     if (state.editingBlockId === 0) return
+
+    const exitingBlockId = state.editingBlockId
 
     // Find parent block
     function findParent(obj: LevelObject, targetId: number): Block | null {
@@ -197,8 +216,19 @@ export const actions = {
     const parent = findParent(state.level.root, state.editingBlockId)
     if (parent) {
       state.editingBlockId = parent.id
-      state.selectedPath = null
-      state.selectedObject = null
+      // Select the block we just exited from
+      const exitedBlockIndex = parent.children.findIndex(
+        (child) => child.type === 'Block' && child.id === exitingBlockId
+      )
+      if (exitedBlockIndex >= 0) {
+        state.selectedPath = [exitedBlockIndex]
+        state.selectedObject = parent.children[exitedBlockIndex]
+        state.selectedPosition = null
+      } else {
+        state.selectedPath = null
+        state.selectedObject = null
+        state.selectedPosition = { x: 0, y: 0 }
+      }
     }
   },
 

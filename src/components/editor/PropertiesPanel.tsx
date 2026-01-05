@@ -442,6 +442,29 @@ function EditingBlockProperties() {
   )
 }
 
+function HeaderProperties() {
+  const snap = useSnapshot(state)
+  const header = snap.level.header
+
+  return (
+    <div className="space-y-3">
+      <div className="text-sm font-medium">Level Options</div>
+      <div className="space-y-2">
+        <CheckboxInput
+          label="Shed"
+          checked={header.shed === true}
+          onChange={(v) => actions.updateHeaderProperty('shed', v ? true : undefined)}
+        />
+        <CheckboxInput
+          label="Inner Push"
+          checked={header.innerPush === true}
+          onChange={(v) => actions.updateHeaderProperty('innerPush', v ? true : undefined)}
+        />
+      </div>
+    </div>
+  )
+}
+
 function EmptyPositionPanel() {
   const snap = useSnapshot(state)
   const pos = snap.selectedPosition
@@ -518,6 +541,13 @@ export function PropertiesPanel() {
             <EmptyPositionPanel />
           ) : (
             <EditingBlockProperties />
+          )}
+
+          {snap.editingBlockId === 0 && (
+            <>
+              <Separator />
+              <HeaderProperties />
+            </>
           )}
         </div>
       </ScrollArea>
