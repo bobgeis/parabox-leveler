@@ -183,6 +183,20 @@ export const actions = {
     const block = getEditingBlock()
     const tool = state.tool
 
+    // Check what's already at this position
+    const existingAtPos = block.children.filter((obj) => obj.x === x && obj.y === y)
+
+    // Floor can coexist with Block/Ref (block can start on a button)
+    // But otherwise, don't allow multiple objects at same position
+    const hasNonFloor = existingAtPos.some((obj) => obj.type !== 'Floor')
+    const hasFloor = existingAtPos.some((obj) => obj.type === 'Floor')
+
+    // If placing a floor and there's already a floor, don't allow
+    if (tool === 'floor' && hasFloor) return
+
+    // If placing non-floor and there's already a non-floor object, don't allow
+    if (tool !== 'floor' && hasNonFloor) return
+
     switch (tool) {
       case 'block': {
         const id = getNextBlockId(state.level)

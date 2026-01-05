@@ -3,8 +3,8 @@
  */
 
 import { useSnapshot } from 'valtio'
-import { state, actions, getEditingBlock } from '@/store/levelStore'
-import type { LevelObject } from '@/types/level'
+import { state, actions, findBlockById } from '@/store/levelStore'
+import type { Level, LevelObject } from '@/types/level'
 import { cn } from '@/lib/utils'
 
 // Convert HSV to CSS color
@@ -126,7 +126,11 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick }: GridCel
 
 export function GridEditor() {
   const snap = useSnapshot(state)
-  const editingBlock = getEditingBlock()
+
+  // Find editing block from snapshot (reactive)
+  // Cast to Level to work with findBlockById, then cast children for iteration
+  const editingBlock = findBlockById(snap.level as Level, snap.editingBlockId) ?? snap.level.root
+  const children = editingBlock.children as readonly LevelObject[]
 
   const { width, height } = editingBlock
 
@@ -134,9 +138,7 @@ export function GridEditor() {
   const handleCellClick = (x: number, y: number) => {
     if (snap.tool === 'select') {
       // Find object at this position and select it
-      const idx = editingBlock.children.findIndex(
-        (obj) => obj.x === x && obj.y === y
-      )
+      const idx = children.findIndex((obj) => obj.x === x && obj.y === y)
       if (idx >= 0) {
         actions.selectObject([idx])
       } else {
@@ -150,9 +152,7 @@ export function GridEditor() {
 
   // Handle double-click to enter block
   const handleCellDoubleClick = (x: number, y: number) => {
-    const obj = editingBlock.children.find(
-      (o) => o.x === x && o.y === y && o.type === 'Block'
-    )
+    const obj = children.find((o) => o.x === x && o.y === y && o.type === 'Block')
     if (obj && obj.type === 'Block') {
       actions.enterBlock(obj.id)
     }
@@ -162,7 +162,7 @@ export function GridEditor() {
   const isCellSelected = (x: number, y: number) => {
     if (!snap.selectedPath || snap.selectedPath.length === 0) return false
     const idx = snap.selectedPath[0]
-    const obj = editingBlock.children[idx]
+    const obj = children[idx]
     return obj && obj.x === x && obj.y === y
   }
 
