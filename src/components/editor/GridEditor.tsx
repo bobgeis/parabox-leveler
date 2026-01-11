@@ -2,7 +2,7 @@
  * Grid Editor - Main visual editing area for placing objects
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useSnapshot } from 'valtio'
 import { state, actions, findBlockById } from '@/store/levelStore'
 import type { Level, LevelObject } from '@/types/level'
@@ -57,9 +57,11 @@ interface GridCellProps {
   isSelected: boolean
   onClick: () => void
   onDoubleClick: () => void
+  onMouseDown: () => void
+  onMouseEnter: () => void
 }
 
-function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick }: GridCellProps) {
+function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick, onMouseDown, onMouseEnter }: GridCellProps) {
   // Find what's at this cell
   const objectsAtCell = objects.filter((obj) => obj.x === x && obj.y === y)
 
@@ -169,6 +171,8 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick }: GridCel
       )}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
+      onMouseDown={onMouseDown}
+      onMouseEnter={onMouseEnter}
     >
       {content}
       <span className="absolute bottom-0 right-0.5 text-[8px] text-muted-foreground/50">
@@ -187,6 +191,77 @@ export function GridEditor() {
   const children = editingBlock.children as readonly LevelObject[]
 
   const { width, height } = editingBlock
+
+  // Drag-to-create state
+  const [heldKey, setHeldKey] = useState<'1' | '2' | '3' | '4' | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const visitedCells = useRef<Set<string>>(new Set())
+  const historyMarked = useRef(false)
+
+  // Track held creation keys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
+      if (state.modalOpen) return
+      if (['1', '2', '3', '4'].includes(e.key) && !e.repeat) {
+        setHeldKey(e.key as '1' | '2' | '3' | '4')
+      }
+    }
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        setHeldKey(null)
+        setIsDragging(false)
+        visitedCells.current.clear()
+        historyMarked.current = false
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
+  }, [])
+
+  // Handle mouse up globally to end drag
+  useEffect(() => {
+    const handleMouseUp = () => {
+      if (isDragging) {
+        setIsDragging(false)
+        visitedCells.current.clear()
+        historyMarked.current = false
+      }
+    }
+    window.addEventListener('mouseup', handleMouseUp)
+    return () => window.removeEventListener('mouseup', handleMouseUp)
+  }, [isDragging])
+
+  // Create object at position during drag
+  const createAtPosition = useCallback((x: number, y: number) => {
+    if (!heldKey) return
+    const cellKey = `${x},${y}`
+    if (visitedCells.current.has(cellKey)) return
+    visitedCells.current.add(cellKey)
+
+    const type = heldKey === '1' ? 'wall' : heldKey === '2' ? 'floor' : heldKey === '3' ? 'block' : 'ref'
+    actions.placeObjectAtPositionXY(x, y, type, !historyMarked.current)
+    historyMarked.current = true
+  }, [heldKey])
+
+  // Handle mouse down on cell - start drag if key held
+  const handleCellMouseDown = useCallback((x: number, y: number) => {
+    if (heldKey) {
+      setIsDragging(true)
+      createAtPosition(x, y)
+    }
+  }, [heldKey, createAtPosition])
+
+  // Handle mouse enter on cell - create if dragging
+  const handleCellMouseEnter = useCallback((x: number, y: number) => {
+    if (isDragging && heldKey) {
+      createAtPosition(x, y)
+    }
+  }, [isDragging, heldKey, createAtPosition])
 
   // Keyboard controls
   useEffect(() => {
@@ -429,6 +504,8 @@ export function GridEditor() {
           isSelected={isCellSelected(x, y)}
           onClick={() => handleCellClick(x, y)}
           onDoubleClick={() => handleCellDoubleClick(x, y)}
+          onMouseDown={() => handleCellMouseDown(x, y)}
+          onMouseEnter={() => handleCellMouseEnter(x, y)}
         />
       )
     }

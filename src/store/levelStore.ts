@@ -605,6 +605,43 @@ export const actions = {
     state.selectedObject = block.children[idx]
     state.selectedPosition = null
   },
+
+  // Place object at specific x,y position (for drag-to-create)
+  placeObjectAtPositionXY: (x: number, y: number, type: 'block' | 'wall' | 'floor' | 'ref', saveHistory: boolean = true) => {
+    const block = getEditingBlock()
+
+    // Check for existing objects
+    const existingAtPos = block.children.filter((obj) => obj.x === x && obj.y === y)
+    const hasNonFloor = existingAtPos.some((obj) => obj.type !== 'Floor')
+    const hasFloor = existingAtPos.some((obj) => obj.type === 'Floor')
+
+    if (type === 'floor' && hasFloor) return
+    if (type !== 'floor' && hasNonFloor) return
+
+    if (saveHistory) {
+      saveToHistory()
+    }
+
+    let newObj: LevelObject
+    switch (type) {
+      case 'block': {
+        const id = getNextBlockId(state.level)
+        newObj = createBlock(id, x, y, 3, 3)
+        break
+      }
+      case 'wall':
+        newObj = createWall(x, y)
+        break
+      case 'floor':
+        newObj = createFloor(x, y, state.floorToolType)
+        break
+      case 'ref':
+        newObj = createRef(x, y, state.refToolTargetId, state.refToolIsExit)
+        break
+    }
+
+    block.children.push(newObj)
+  },
 }
 
 // Helper to reassign Block IDs to avoid conflicts
