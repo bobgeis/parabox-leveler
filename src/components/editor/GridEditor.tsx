@@ -192,23 +192,47 @@ export function GridEditor() {
 
   const { width, height } = editingBlock
 
-  // Drag-to-create state
-  const [heldKey, setHeldKey] = useState<'1' | '2' | '3' | '4' | null>(null)
+  // Drag-to-create/delete/paste state
+  type HeldKeyType = '1' | '2' | '3' | '4' | 'delete' | 'paste' | null
+  const [heldKey, setHeldKey] = useState<HeldKeyType>(null)
+  const heldKeyRef = useRef<HeldKeyType>(null)
   const [isDragging, setIsDragging] = useState(false)
   const visitedCells = useRef<Set<string>>(new Set())
   const historyMarked = useRef(false)
 
-  // Track held creation keys
+  // Keep ref in sync with state
+  useEffect(() => {
+    heldKeyRef.current = heldKey
+  }, [heldKey])
+
+  // Track held action keys (1-4 for create, Backspace/Delete for delete, V for paste)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
       if (state.modalOpen) return
-      if (['1', '2', '3', '4'].includes(e.key) && !e.repeat) {
-        setHeldKey(e.key as '1' | '2' | '3' | '4')
+      if (e.repeat) return
+
+      let newHeldKey: HeldKeyType = null
+      if (['1', '2', '3', '4'].includes(e.key)) {
+        newHeldKey = e.key as '1' | '2' | '3' | '4'
+      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+        newHeldKey = 'delete'
+      } else if (e.key === 'v' || e.key === 'V') {
+        newHeldKey = 'paste'
+      }
+
+      if (newHeldKey) {
+        setHeldKey(newHeldKey)
+        // Mark starting position as visited so we don't re-act on it
+        const selectedObj = state.selectedObject
+        const selectedPos = state.selectedPosition
+        const x = selectedObj?.x ?? selectedPos?.x ?? 0
+        const y = selectedObj?.y ?? selectedPos?.y ?? 0
+        visitedCells.current.add(`${x},${y}`)
       }
     }
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (['1', '2', '3', '4'].includes(e.key)) {
+      if (['1', '2', '3', '4'].includes(e.key) || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'v' || e.key === 'V') {
         setHeldKey(null)
         setIsDragging(false)
         visitedCells.current.clear()
@@ -236,32 +260,40 @@ export function GridEditor() {
     return () => window.removeEventListener('mouseup', handleMouseUp)
   }, [isDragging])
 
-  // Create object at position during drag
-  const createAtPosition = useCallback((x: number, y: number) => {
+  // Perform action at position during drag/keyboard nav
+  const performActionAtPosition = useCallback((x: number, y: number) => {
     if (!heldKey) return
     const cellKey = `${x},${y}`
     if (visitedCells.current.has(cellKey)) return
     visitedCells.current.add(cellKey)
 
-    const type = heldKey === '1' ? 'wall' : heldKey === '2' ? 'floor' : heldKey === '3' ? 'block' : 'ref'
-    actions.placeObjectAtPositionXY(x, y, type, !historyMarked.current)
-    historyMarked.current = true
+    if (heldKey === '1' || heldKey === '2' || heldKey === '3' || heldKey === '4') {
+      const type = heldKey === '1' ? 'wall' : heldKey === '2' ? 'floor' : heldKey === '3' ? 'block' : 'ref'
+      actions.placeObjectAtPositionXY(x, y, type, !historyMarked.current)
+      historyMarked.current = true
+    } else if (heldKey === 'delete') {
+      actions.deleteAtPositionXY(x, y, !historyMarked.current)
+      historyMarked.current = true
+    } else if (heldKey === 'paste') {
+      actions.pasteAtPositionXY(x, y, !historyMarked.current)
+      historyMarked.current = true
+    }
   }, [heldKey])
 
   // Handle mouse down on cell - start drag if key held
   const handleCellMouseDown = useCallback((x: number, y: number) => {
     if (heldKey) {
       setIsDragging(true)
-      createAtPosition(x, y)
+      performActionAtPosition(x, y)
     }
-  }, [heldKey, createAtPosition])
+  }, [heldKey, performActionAtPosition])
 
-  // Handle mouse enter on cell - create if dragging
+  // Handle mouse enter on cell - perform action if dragging
   const handleCellMouseEnter = useCallback((x: number, y: number) => {
     if (isDragging && heldKey) {
-      createAtPosition(x, y)
+      performActionAtPosition(x, y)
     }
-  }, [isDragging, heldKey, createAtPosition])
+  }, [isDragging, heldKey, performActionAtPosition])
 
   // Keyboard controls
   useEffect(() => {
@@ -315,6 +347,36 @@ export function GridEditor() {
         return true
       }
 
+      // Helper to perform held-key action at position
+      const doHeldAction = (x: number, y: number) => {
+        const held = heldKeyRef.current
+        if (!held) return
+        const cellKey = `${x},${y}`
+        if (visitedCells.current.has(cellKey)) return
+        visitedCells.current.add(cellKey)
+
+        if (held === '1' || held === '2' || held === '3' || held === '4') {
+          const type = held === '1' ? 'wall' : held === '2' ? 'floor' : held === '3' ? 'block' : 'ref'
+          actions.placeObjectAtPositionXY(x, y, type, !historyMarked.current)
+          historyMarked.current = true
+        } else if (held === 'delete') {
+          actions.deleteAtPositionXY(x, y, !historyMarked.current)
+          historyMarked.current = true
+        } else if (held === 'paste') {
+          actions.pasteAtPositionXY(x, y, !historyMarked.current)
+          historyMarked.current = true
+        }
+      }
+
+      // Helper to navigate - use selectPosition when held key active to avoid selecting objects that will be deleted
+      const navigateTo = (x: number, y: number) => {
+        if (heldKeyRef.current) {
+          actions.selectPosition(x, y)
+        } else {
+          selectAtPosition(x, y)
+        }
+      }
+
       switch (e.key) {
         case 'ArrowUp':
         case 'w':
@@ -324,7 +386,8 @@ export function GridEditor() {
             moveWithAlt(0, 1)
           } else if (selectedObj || selectedPos) {
             const newY = Math.min(currentY + 1, block.height - 1)
-            selectAtPosition(currentX, newY)
+            navigateTo(currentX, newY)
+            doHeldAction(currentX, newY)
           }
           break
 
@@ -336,7 +399,8 @@ export function GridEditor() {
             moveWithAlt(0, -1)
           } else if (selectedObj || selectedPos) {
             const newY = Math.max(currentY - 1, 0)
-            selectAtPosition(currentX, newY)
+            navigateTo(currentX, newY)
+            doHeldAction(currentX, newY)
           }
           break
 
@@ -348,7 +412,8 @@ export function GridEditor() {
             moveWithAlt(-1, 0)
           } else if (selectedObj || selectedPos) {
             const newX = Math.max(currentX - 1, 0)
-            selectAtPosition(newX, currentY)
+            navigateTo(newX, currentY)
+            doHeldAction(newX, currentY)
           }
           break
 
@@ -360,7 +425,8 @@ export function GridEditor() {
             moveWithAlt(1, 0)
           } else if (selectedObj || selectedPos) {
             const newX = Math.min(currentX + 1, block.width - 1)
-            selectAtPosition(newX, currentY)
+            navigateTo(newX, currentY)
+            doHeldAction(newX, currentY)
           }
           break
 
@@ -369,6 +435,9 @@ export function GridEditor() {
           e.preventDefault()
           if (selectedObj) {
             actions.deleteSelected()
+          } else if (selectedPos) {
+            // Delete object at selected position if no object is directly selected
+            actions.deleteAtPositionXY(selectedPos.x, selectedPos.y, true)
           }
           break
 

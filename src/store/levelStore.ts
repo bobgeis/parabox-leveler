@@ -642,6 +642,45 @@ export const actions = {
 
     block.children.push(newObj)
   },
+
+  // Delete object at specific x,y position (for drag-to-delete)
+  deleteAtPositionXY: (x: number, y: number, saveHistory: boolean = true) => {
+    const block = getEditingBlock()
+    const idx = block.children.findIndex((obj) => obj.x === x && obj.y === y && obj.type !== 'Floor')
+    if (idx < 0) return
+
+    if (saveHistory) {
+      saveToHistory()
+    }
+
+    block.children.splice(idx, 1)
+  },
+
+  // Paste clipboard at specific x,y position (for drag-to-paste)
+  pasteAtPositionXY: (x: number, y: number, saveHistory: boolean = true) => {
+    if (!state.clipboard) return
+
+    const block = getEditingBlock()
+
+    // Check for existing non-Floor objects
+    const existingAtPos = block.children.filter((obj) => obj.x === x && obj.y === y)
+    const hasNonFloor = existingAtPos.some((obj) => obj.type !== 'Floor')
+    if (hasNonFloor && state.clipboard.type !== 'Floor') return
+
+    if (saveHistory) {
+      saveToHistory()
+    }
+
+    const pasted = JSON.parse(JSON.stringify(state.clipboard)) as LevelObject
+    pasted.x = x
+    pasted.y = y
+
+    if (pasted.type === 'Block') {
+      reassignBlockIds(pasted, state.level)
+    }
+
+    block.children.push(pasted)
+  },
 }
 
 // Helper to reassign Block IDs to avoid conflicts
