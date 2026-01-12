@@ -74,7 +74,7 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick, onMouseDo
     if (obj.type === 'Wall') {
       bgColor = 'bg-slate-700'
       content = (
-        <span className="text-[20px] font-bold text-slate-400">#</span>
+        <span className="absolute inset-0 flex items-center justify-center text-[20px] font-bold text-slate-400">#</span>
       )
     } else if (obj.type === 'Floor') {
       bgColor = obj.floorType === 'PlayerButton' ? 'bg-yellow-500/50' : 'bg-green-500/50'
@@ -271,8 +271,17 @@ export function GridEditor() {
     if (visitedCells.current.has(cellKey)) return
     visitedCells.current.add(cellKey)
 
-    if (heldKey === '1' || heldKey === '2' || heldKey === '3' || heldKey === '4') {
-      const type = heldKey === '1' ? 'wall' : heldKey === '2' ? 'floor' : heldKey === '3' ? 'block' : 'ref'
+    if (heldKey === '1' || heldKey === '2' || heldKey === '3' || heldKey === '4' || heldKey === '5') {
+      const type =
+        heldKey === '1'
+          ? 'wall'
+          : heldKey === '2'
+            ? 'floor'
+            : heldKey === '3'
+              ? 'box'
+              : heldKey === '4'
+                ? 'block'
+                : 'ref'
       actions.placeObjectAtPositionXY(x, y, type, !historyMarked.current)
       historyMarked.current = true
     } else if (heldKey === 'delete') {
