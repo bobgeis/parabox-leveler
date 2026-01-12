@@ -450,7 +450,7 @@ export const actions = {
   // Update object properties
   updateSelectedProperty: (key: string, value: unknown) => {
     if (!state.selectedObject) return
-    ;(state.selectedObject as Record<string, unknown>)[key] = value
+    ;(state.selectedObject as unknown as Record<string, unknown>)[key] = value
   },
 
   // Block-specific updates
@@ -479,7 +479,7 @@ export const actions = {
   // Update editing block property
   updateEditingBlockProperty: (key: string, value: unknown) => {
     const block = getEditingBlock()
-    ;(block as Record<string, unknown>)[key] = value
+    ;(block as unknown as Record<string, unknown>)[key] = value
   },
 
   // Update editing block color
@@ -704,15 +704,40 @@ export const actions = {
 function reassignBlockIds(obj: LevelObject, level: Level) {
   if (obj.type !== 'Block') return
 
-  // Check if this ID already exists
-  if (findBlockById(level, obj.id)) {
-    obj.id = getNextBlockId(level)
+  // When pasting, all Blocks in the pasted subtree must get fresh unique IDs,
+  // including nested Blocks. Additionally, any Ref inside the pasted subtree
+  // that targets a remapped Block ID should be updated to the new ID.
+  const idMap = new Map<number, number>()
+  let nextId = getNextBlockId(level)
+
+  function remapBlocks(block: LevelObject) {
+    if (block.type !== 'Block') return
+    const oldId = block.id
+    const newId = nextId++
+    idMap.set(oldId, newId)
+    block.id = newId
+    for (const child of block.children) {
+      remapBlocks(child)
+    }
   }
 
-  // Recursively check children
-  for (const child of obj.children) {
-    reassignBlockIds(child, level)
+  function remapRefs(node: LevelObject) {
+    if (node.type === 'Ref') {
+      const mapped = idMap.get(node.id)
+      if (mapped !== undefined) {
+        node.id = mapped
+      }
+      return
+    }
+    if (node.type === 'Block') {
+      for (const child of node.children) {
+        remapRefs(child)
+      }
+    }
   }
+
+  remapBlocks(obj)
+  remapRefs(obj)
 }
 
 // Validation helpers

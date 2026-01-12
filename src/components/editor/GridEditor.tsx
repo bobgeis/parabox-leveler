@@ -467,6 +467,13 @@ export function GridEditor() {
           } else if (selectedObj && selectedObj.type === 'Ref') {
             // Navigate into the referenced block
             actions.enterBlock(selectedObj.id)
+          } else if (!selectedObj && selectedPos) {
+            const objAtPos = block.children.find((o) => o.x === selectedPos.x && o.y === selectedPos.y)
+            if (objAtPos?.type === 'Block') {
+              actions.enterBlock(objAtPos.id)
+            } else if (objAtPos?.type === 'Ref') {
+              actions.enterBlock(objAtPos.id)
+            }
           } else if (!selectedObj && !selectedPos) {
             // No selection - select origin
             actions.selectPosition(0, 0)
