@@ -32,6 +32,7 @@ import {
   Copy,
   Scissors,
   Clipboard,
+  Trash2,
   Square,
   Hash,
   CircleDot,
@@ -249,6 +250,7 @@ function HeaderDialog() {
 }
 
 export function Toolbar() {
+  const snap = useSnapshot(state)
   const historySnap = useSnapshot(historyState)
 
   // Reactive undo/redo state from history snapshot
@@ -347,6 +349,27 @@ export function Toolbar() {
             </Button>
           </TooltipTrigger>
           <TooltipContent>Paste (V)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (snap.selectedObject) {
+                  actions.deleteSelected()
+                } else if (snap.selectedPosition) {
+                  actions.deleteAtPositionXY(snap.selectedPosition.x, snap.selectedPosition.y, true)
+                }
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Delete (Backspace)</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
