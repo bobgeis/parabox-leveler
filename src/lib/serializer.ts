@@ -108,15 +108,19 @@ export function serializeLevel(level: Level): string {
   }
 
   if (level.header.shed) {
-    lines.push('shed')
+    lines.push('shed 1')
   }
 
   if (level.header.innerPush) {
-    lines.push('inner_push')
+    lines.push('inner_push 1')
   }
 
   if (level.header.attemptOrder) {
     lines.push(`attempt_order ${level.header.attemptOrder}`)
+  }
+
+  if (level.header.drawStyle) {
+    lines.push(`draw_style ${level.header.drawStyle}`)
   }
 
   if (level.header.customLevelMusic !== undefined) {
