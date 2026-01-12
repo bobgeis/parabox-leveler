@@ -18,6 +18,90 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
+function clamp01(n: number): number {
+  return Math.min(1, Math.max(0, n))
+}
+
+function hsvToRgb(h: number, s: number, v: number): { r: number; g: number; b: number } {
+  const hh = ((h % 1) + 1) % 1
+  const c = v * s
+  const x = c * (1 - Math.abs(((hh * 6) % 2) - 1))
+  const m = v - c
+
+  let r = 0,
+    g = 0,
+    b = 0
+  const hue = hh * 6
+
+  if (hue < 1) {
+    r = c
+    g = x
+  } else if (hue < 2) {
+    r = x
+    g = c
+  } else if (hue < 3) {
+    g = c
+    b = x
+  } else if (hue < 4) {
+    g = x
+    b = c
+  } else if (hue < 5) {
+    r = x
+    b = c
+  } else {
+    r = c
+    b = x
+  }
+
+  return {
+    r: Math.round((r + m) * 255),
+    g: Math.round((g + m) * 255),
+    b: Math.round((b + m) * 255),
+  }
+}
+
+function rgbToHsv(r: number, g: number, b: number): { h: number; s: number; v: number } {
+  const rr = r / 255
+  const gg = g / 255
+  const bb = b / 255
+  const max = Math.max(rr, gg, bb)
+  const min = Math.min(rr, gg, bb)
+  const delta = max - min
+
+  let h = 0
+  if (delta !== 0) {
+    if (max === rr) {
+      h = ((gg - bb) / delta) % 6
+    } else if (max === gg) {
+      h = (bb - rr) / delta + 2
+    } else {
+      h = (rr - gg) / delta + 4
+    }
+    h = h / 6
+    if (h < 0) h += 1
+  }
+
+  const s = max === 0 ? 0 : delta / max
+  const v = max
+  return { h: clamp01(h), s: clamp01(s), v: clamp01(v) }
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+  const toHex = (n: number) => Math.round(n).toString(16).padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex.trim())
+  if (!m) return null
+  const n = parseInt(m[1], 16)
+  return {
+    r: (n >> 16) & 255,
+    g: (n >> 8) & 255,
+    b: n & 255,
+  }
+}
+
 function NumberInput({
   label,
   value,
@@ -77,6 +161,9 @@ function BlockProperties() {
 
   if (!obj || obj.type !== 'Block') return null
 
+  const swatchRgb = hsvToRgb(obj.hue, obj.sat, obj.val)
+  const swatchHex = rgbToHex(swatchRgb.r, swatchRgb.g, swatchRgb.b)
+
   return (
     <div className="space-y-3">
       <div className="text-sm font-medium">Block {obj.id}</div>
@@ -111,6 +198,25 @@ function BlockProperties() {
 
       <div className="space-y-2">
         <div className="text-xs text-muted-foreground">Color (HSV)</div>
+        <div className="grid grid-cols-2 items-center gap-2">
+          <Label className="text-xs">Picker</Label>
+          <div
+            className="relative h-7 w-full rounded border"
+            style={{ backgroundColor: swatchHex }}
+          >
+            <input
+              type="color"
+              value={swatchHex}
+              onChange={(e) => {
+                const rgb = hexToRgb(e.target.value)
+                if (!rgb) return
+                const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b)
+                actions.updateBlockColor(hsv.h, hsv.s, hsv.v)
+              }}
+              className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+            />
+          </div>
+        </div>
         <NumberInput
           label="Hue"
           value={obj.hue}
@@ -358,6 +464,9 @@ function EditingBlockProperties() {
   // Get editing block from snapshot for reactivity
   const editingBlock = findBlockById(snap.level as Level, snap.editingBlockId) ?? snap.level.root
 
+  const swatchRgb = hsvToRgb(editingBlock.hue, editingBlock.sat, editingBlock.val)
+  const swatchHex = rgbToHex(swatchRgb.r, swatchRgb.g, swatchRgb.b)
+
   return (
     <div className="space-y-3">
       <div className="text-sm font-medium">Current Block: {editingBlock.id}</div>
@@ -392,6 +501,25 @@ function EditingBlockProperties() {
 
       <div className="space-y-2">
         <div className="text-xs text-muted-foreground">Color (HSV)</div>
+        <div className="grid grid-cols-2 items-center gap-2">
+          <Label className="text-xs">Picker</Label>
+          <div
+            className="relative h-7 w-full rounded border"
+            style={{ backgroundColor: swatchHex }}
+          >
+            <input
+              type="color"
+              value={swatchHex}
+              onChange={(e) => {
+                const rgb = hexToRgb(e.target.value)
+                if (!rgb) return
+                const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b)
+                actions.updateEditingBlockColor(hsv.h, hsv.s, hsv.v)
+              }}
+              className="absolute inset-0 h-full w-full opacity-0 cursor-pointer"
+            />
+          </div>
+        </div>
         <NumberInput
           label="Hue"
           value={editingBlock.hue}
