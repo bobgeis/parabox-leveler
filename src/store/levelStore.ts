@@ -2,7 +2,7 @@
  * Valtio state store for level editing with undo/redo support
  */
 
-import { proxy, snapshot } from 'valtio'
+import { proxy, snapshot, subscribe } from 'valtio'
 import type { Level, LevelObject, Block } from '@/types/level'
 import {
   createDefaultLevel,
@@ -72,6 +72,106 @@ const initialState: EditorState = {
 // Main state proxy
 export const state = proxy<EditorState>(initialState)
 
+ type PersistedEditorStateV1 = {
+   version: 1
+   savedAt: number
+   level: Level
+   editingBlockId: number
+   selectedPath: number[] | null
+   selectedPosition: { x: number; y: number } | null
+   tool: Tool
+   floorToolType: FloorToolType
+   refToolIsExit: boolean
+   refToolTargetId: number
+   clipboard: LevelObject | null
+ }
+
+ const AUTOSAVE_KEY = 'parabox-leveler.autosave.v1'
+ const SLOT_KEY_PREFIX = 'parabox-leveler.slot.'
+
+ function getSlotKey(slot: number): string {
+   return `${SLOT_KEY_PREFIX}${slot}.v1`
+ }
+
+ function isRecord(value: unknown): value is Record<string, unknown> {
+   return typeof value === 'object' && value !== null
+ }
+
+ function toPersistedState(): PersistedEditorStateV1 {
+   const snap = snapshot(state)
+   return {
+     version: 1,
+     savedAt: Date.now(),
+     level: JSON.parse(JSON.stringify(snap.level)) as Level,
+     editingBlockId: snap.editingBlockId,
+     selectedPath: snap.selectedPath ? [...snap.selectedPath] : null,
+     selectedPosition: snap.selectedPosition ? { ...snap.selectedPosition } : null,
+     tool: snap.tool,
+     floorToolType: snap.floorToolType,
+     refToolIsExit: snap.refToolIsExit,
+     refToolTargetId: snap.refToolTargetId,
+     clipboard: snap.clipboard ? (JSON.parse(JSON.stringify(snap.clipboard)) as LevelObject) : null,
+   }
+ }
+
+ function countObjectsInTree(obj: LevelObject): number {
+   if (obj.type === 'Block') {
+     let total = 1
+     for (const child of obj.children) total += countObjectsInTree(child)
+     return total
+   }
+   return 1
+ }
+
+ function countLevelObjects(level: Level): number {
+   const totalIncludingRoot = countObjectsInTree(level.root)
+   return Math.max(0, totalIncludingRoot - 1)
+ }
+
+ function tryReadPersisted(key: string): PersistedEditorStateV1 | null {
+   if (typeof window === 'undefined') return null
+   try {
+     const raw = window.localStorage.getItem(key)
+     if (!raw) return null
+     const parsed = JSON.parse(raw) as unknown
+     if (!isRecord(parsed)) return null
+     if (parsed['version'] !== 1) return null
+     if (!('level' in parsed)) return null
+     return parsed as PersistedEditorStateV1
+   } catch {
+     return null
+   }
+ }
+
+ function writePersisted(key: string, persisted: PersistedEditorStateV1): void {
+   if (typeof window === 'undefined') return
+   try {
+     window.localStorage.setItem(key, JSON.stringify(persisted))
+   } catch {
+     // ignore
+   }
+ }
+
+ function applyPersisted(persisted: PersistedEditorStateV1): void {
+   state.level = persisted.level
+   state.editingBlockId = persisted.editingBlockId
+   state.selectedPath = persisted.selectedPath
+   state.selectedPosition = persisted.selectedPosition
+   state.tool = persisted.tool
+   state.floorToolType = persisted.floorToolType
+   state.refToolIsExit = persisted.refToolIsExit
+   state.refToolTargetId = persisted.refToolTargetId
+   state.clipboard = persisted.clipboard
+   state.modalOpen = false
+
+   if (persisted.selectedPath && persisted.selectedPath.length > 0) {
+     const block = findBlockById(state.level, state.editingBlockId) ?? state.level.root
+     state.selectedObject = block.children[persisted.selectedPath[0]] ?? null
+   } else {
+     state.selectedObject = null
+   }
+ }
+
 // Custom undo/redo history with selection state
 interface HistoryEntry {
   level: Level
@@ -89,6 +189,30 @@ export const historyState = proxy<HistoryState>({
   undoStack: [],
   redoStack: [],
 })
+
+ function clearHistory() {
+   historyState.undoStack = []
+   historyState.redoStack = []
+ }
+
+ let isHydrating = true
+ const autosaveOnLoad = tryReadPersisted(AUTOSAVE_KEY)
+ if (autosaveOnLoad) {
+   clearHistory()
+   applyPersisted(autosaveOnLoad)
+ }
+ isHydrating = false
+
+ let autosaveTimer: ReturnType<typeof setTimeout> | null = null
+ subscribe(state, () => {
+   if (isHydrating) return
+   if (typeof window === 'undefined') return
+   if (autosaveTimer) window.clearTimeout(autosaveTimer)
+   autosaveTimer = window.setTimeout(() => {
+     autosaveTimer = null
+     writePersisted(AUTOSAVE_KEY, toPersistedState())
+   }, 250)
+ })
 
 // Save current level and selection state to undo stack (call before mutations)
 function saveToHistory() {
@@ -167,22 +291,80 @@ export const actions = {
 
   // Level management
   newLevel: () => {
+    clearHistory()
     state.level = createDefaultLevel()
     state.selectedPath = null
     state.selectedObject = null
+    state.selectedPosition = { x: 0, y: 0 }
     state.editingBlockId = 0
+    state.tool = 'select'
+    state.floorToolType = 'Button'
+    state.refToolIsExit = false
+    state.refToolTargetId = 0
+    state.clipboard = null
+    state.modalOpen = false
+    writePersisted(AUTOSAVE_KEY, toPersistedState())
   },
 
   importLevel: (text: string) => {
     try {
       const level = parseLevel(text)
+      clearHistory()
       state.level = level
       state.selectedPath = null
       state.selectedObject = null
+      state.selectedPosition = { x: 0, y: 0 }
       state.editingBlockId = 0
+      state.modalOpen = false
+      writePersisted(AUTOSAVE_KEY, toPersistedState())
       return { success: true }
     } catch (error) {
       return { success: false, error: String(error) }
+    }
+  },
+
+  saveToSlot: (slot: number) => {
+    if (!Number.isFinite(slot) || slot < 1) return
+    writePersisted(getSlotKey(slot), toPersistedState())
+  },
+
+  loadFromSlot: (slot: number) => {
+    if (!Number.isFinite(slot) || slot < 1) return false
+    const persisted = tryReadPersisted(getSlotKey(slot))
+    if (!persisted) return false
+    clearHistory()
+    applyPersisted(persisted)
+    writePersisted(AUTOSAVE_KEY, toPersistedState())
+    return true
+  },
+
+  clearSlot: (slot: number) => {
+    if (typeof window === 'undefined') return
+    if (!Number.isFinite(slot) || slot < 1) return
+    try {
+      window.localStorage.removeItem(getSlotKey(slot))
+    } catch {
+      // ignore
+    }
+  },
+
+  getSlotSavedAt: (slot: number): number | null => {
+    if (!Number.isFinite(slot) || slot < 1) return null
+    const persisted = tryReadPersisted(getSlotKey(slot))
+    return persisted ? persisted.savedAt : null
+  },
+
+  getSlotInfo: (
+    slot: number
+  ): { savedAt: number; title: string | null; objectCount: number } | null => {
+    if (!Number.isFinite(slot) || slot < 1) return null
+    const persisted = tryReadPersisted(getSlotKey(slot))
+    if (!persisted) return null
+    const title = persisted.level.header.comment ?? null
+    return {
+      savedAt: persisted.savedAt,
+      title,
+      objectCount: countLevelObjects(persisted.level),
     }
   },
 

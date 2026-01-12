@@ -26,6 +26,7 @@ import {
   FilePlus,
   Upload,
   Download,
+  Save,
   Undo2,
   Redo2,
   Settings,
@@ -204,6 +205,118 @@ function ClipboardPreview({ obj }: { obj: unknown }) {
   )
 }
 
+function SaveLoadDialog() {
+  const snap = useSnapshot(state)
+  const [open, setOpen] = useState(false)
+  const [refresh, setRefresh] = useState(0)
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    actions.setModalOpen(isOpen)
+    if (isOpen) setRefresh((r) => r + 1)
+  }
+
+  const slots = Array.from({ length: 5 }, (_, i) => i + 1)
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm">
+          <Save className="w-4 h-4 mr-1" />
+          Save/Load
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Save / Load</DialogTitle>
+          <DialogDescription>
+            The editor autosaves automatically. Use slots to manually save and load.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex items-center gap-2">
+          <label htmlFor="levelTitle" className="text-sm w-14">Title:</label>
+          <input
+            id="levelTitle"
+            type="text"
+            className="flex-1 px-2 py-1 text-sm border rounded-md min-w-0"
+            placeholder="Untitled"
+            value={snap.level.header.comment ?? ''}
+            onChange={(e) => actions.updateHeader({ comment: e.target.value || undefined })}
+          />
+        </div>
+
+        <div className="space-y-2">
+          {slots.map((slot) => {
+            void refresh
+            const info = actions.getSlotInfo(slot)
+            const isEmpty = info === null
+            const title = isEmpty ? 'Empty' : info.title ?? 'Untitled'
+            const meta = isEmpty
+              ? ''
+              : `${info.objectCount} objects • ${new Date(info.savedAt).toLocaleString()}`
+
+            return (
+              <div
+                key={slot}
+                className="flex flex-col gap-1 border rounded-md px-2 py-1.5"
+              >
+                <div className="flex items-center gap-2">
+                  <div className="text-sm font-medium w-16 shrink-0">Slot {slot}</div>
+                  <div className="text-sm font-medium min-w-0 truncate">{title}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="text-xs text-muted-foreground flex-1 min-w-0 truncate">{meta}</div>
+                  <div className="flex items-center gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      actions.saveToSlot(slot)
+                      setRefresh((r) => r + 1)
+                    }}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isEmpty}
+                    onClick={() => {
+                      const ok = actions.loadFromSlot(slot)
+                      if (ok) handleOpenChange(false)
+                    }}
+                  >
+                    Load
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isEmpty}
+                    onClick={() => {
+                      actions.clearSlot(slot)
+                      setRefresh((r) => r + 1)
+                    }}
+                  >
+                    Clear
+                  </Button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+            Close
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function ImportDialog() {
   const [open, setOpen] = useState(false)
   const [text, setText] = useState('')
@@ -355,8 +468,13 @@ function HeaderDialog() {
   const snap = useSnapshot(state)
   const [open, setOpen] = useState(false)
 
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    actions.setModalOpen(isOpen)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Settings className="w-4 h-4 mr-1" />
@@ -371,6 +489,17 @@ function HeaderDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="headerTitle" className="text-sm w-24">Title:</label>
+            <input
+              id="headerTitle"
+              type="text"
+              className="flex-1 px-2 py-1 text-sm border rounded-md min-w-0"
+              placeholder="Untitled"
+              value={snap.level.header.comment ?? ''}
+              onChange={(e) => actions.updateHeader({ comment: e.target.value || undefined })}
+            />
+          </div>
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -405,7 +534,7 @@ function HeaderDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={() => setOpen(false)}>Done</Button>
+          <Button onClick={() => handleOpenChange(false)}>Done</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -427,6 +556,8 @@ export function Toolbar() {
         <FilePlus className="w-4 h-4 mr-1" />
         New
       </Button>
+
+      <SaveLoadDialog />
 
       <ImportDialog />
       <ExportDialog />
