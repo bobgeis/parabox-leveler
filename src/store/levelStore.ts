@@ -9,6 +9,7 @@ import {
   getNextBlockId,
   findBlockById,
   createBlock,
+  createBox,
   createWall,
   createFloor,
   createRef,
@@ -311,7 +312,7 @@ export const actions = {
   },
 
   // Create object at selected position
-  createObjectAtPosition: (type: 'block' | 'wall' | 'floor' | 'ref') => {
+  createObjectAtPosition: (type: 'box' | 'block' | 'wall' | 'floor' | 'ref') => {
     if (!state.selectedPosition) return
 
     saveToHistory()  // Save before mutation
@@ -320,9 +321,15 @@ export const actions = {
     const block = getEditingBlock()
 
     switch (type) {
+      case 'box': {
+        const id = getNextBlockId(state.level)
+        const newBox = createBox(id, x, y)
+        block.children.push(newBox)
+        break
+      }
       case 'block': {
         const id = getNextBlockId(state.level)
-        const newBlock = createBlock(id, x, y, 3, 3)
+        const newBlock = createBlock(id, x, y, 3, 3, { fillwithwalls: 0 })
         block.children.push(newBlock)
         break
       }
@@ -554,7 +561,7 @@ export const actions = {
   },
 
   // Quick place object at selected position
-  placeObjectAtSelection: (type: 'block' | 'wall' | 'floor' | 'ref') => {
+  placeObjectAtSelection: (type: 'box' | 'block' | 'wall' | 'floor' | 'ref') => {
     // Get position from selection or selectedPosition
     let x: number, y: number
     if (state.selectedPosition) {
@@ -581,9 +588,14 @@ export const actions = {
 
     let newObj: LevelObject
     switch (type) {
+      case 'box': {
+        const id = getNextBlockId(state.level)
+        newObj = createBox(id, x, y)
+        break
+      }
       case 'block': {
         const id = getNextBlockId(state.level)
-        newObj = createBlock(id, x, y, 3, 3)
+        newObj = createBlock(id, x, y, 3, 3, { fillwithwalls: 0 })
         break
       }
       case 'wall':
@@ -607,7 +619,7 @@ export const actions = {
   },
 
   // Place object at specific x,y position (for drag-to-create)
-  placeObjectAtPositionXY: (x: number, y: number, type: 'block' | 'wall' | 'floor' | 'ref', saveHistory: boolean = true) => {
+  placeObjectAtPositionXY: (x: number, y: number, type: 'box' | 'block' | 'wall' | 'floor' | 'ref', saveHistory: boolean = true) => {
     const block = getEditingBlock()
 
     // Check for existing objects
@@ -624,9 +636,14 @@ export const actions = {
 
     let newObj: LevelObject
     switch (type) {
+      case 'box': {
+        const id = getNextBlockId(state.level)
+        newObj = createBox(id, x, y)
+        break
+      }
       case 'block': {
         const id = getNextBlockId(state.level)
-        newObj = createBlock(id, x, y, 3, 3)
+        newObj = createBlock(id, x, y, 3, 3, { fillwithwalls: 0 })
         break
       }
       case 'wall':
@@ -715,6 +732,10 @@ export function validateLevel(): string[] {
     if (obj.type === 'Block') {
       blockIds.add(obj.id)
       if (obj.player === 1) hasPlayer = true
+      // Check for Box (fillwithwalls=1) with children
+      if (obj.fillwithwalls === 1 && obj.children.length > 0) {
+        warnings.push(`${path}Block ${obj.id} is a Box (fillwithwalls=1) but has children`)
+      }
       obj.children.forEach((child) => checkObjects(child, `${path}Block ${obj.id} > `))
     } else if (obj.type === 'Floor' && obj.floorType === 'PlayerButton') {
       hasPlayerButton = true

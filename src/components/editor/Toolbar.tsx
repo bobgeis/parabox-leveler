@@ -36,6 +36,7 @@ import {
   Hash,
   CircleDot,
   Link,
+  Package,
 } from 'lucide-react'
 import { useState } from 'react'
 
@@ -383,12 +384,27 @@ export function Toolbar() {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => actions.placeObjectAtSelection('box')}
+            >
+              <Package className="w-4 h-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Box (3)</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => actions.placeObjectAtSelection('block')}
             >
               <Square className="w-4 h-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Block (3)</TooltipContent>
+          <TooltipContent>Block (4)</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 
@@ -403,7 +419,7 @@ export function Toolbar() {
               <Link className="w-4 h-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>Ref (4)</TooltipContent>
+          <TooltipContent>Ref (5)</TooltipContent>
         </Tooltip>
       </TooltipProvider>
 

@@ -133,7 +133,7 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick, onMouseDo
             </div>
           ) : (
             <span className="text-[30px] font-bold">
-              {obj.player ? '😶' : obj.id}
+              {obj.player ? '😶' : obj.fillwithwalls === 1 ? '✕' : obj.id}
             </span>
           )}
           {/* Always show ID/player indicator */}
@@ -193,7 +193,8 @@ export function GridEditor() {
   const { width, height } = editingBlock
 
   // Drag-to-create/delete/paste state
-  type HeldKeyType = '1' | '2' | '3' | '4' | 'delete' | 'paste' | null
+  // 1=wall, 2=floor, 3=box, 4=block, 5=ref
+  type HeldKeyType = '1' | '2' | '3' | '4' | '5' | 'delete' | 'paste' | null
   const [heldKey, setHeldKey] = useState<HeldKeyType>(null)
   const heldKeyRef = useRef<HeldKeyType>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -205,7 +206,7 @@ export function GridEditor() {
     heldKeyRef.current = heldKey
   }, [heldKey])
 
-  // Track held action keys (1-4 for create, Backspace/Delete for delete, V for paste)
+  // Track held action keys (1-5 for create, Backspace/Delete for delete, V for paste)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return
@@ -213,8 +214,8 @@ export function GridEditor() {
       if (e.repeat) return
 
       let newHeldKey: HeldKeyType = null
-      if (['1', '2', '3', '4'].includes(e.key)) {
-        newHeldKey = e.key as '1' | '2' | '3' | '4'
+      if (['1', '2', '3', '4', '5'].includes(e.key)) {
+        newHeldKey = e.key as '1' | '2' | '3' | '4' | '5'
       } else if (e.key === 'Backspace' || e.key === 'Delete') {
         newHeldKey = 'delete'
       } else if (e.key === 'v' || e.key === 'V') {
@@ -232,7 +233,7 @@ export function GridEditor() {
       }
     }
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (['1', '2', '3', '4'].includes(e.key) || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'v' || e.key === 'V') {
+      if (['1', '2', '3', '4', '5'].includes(e.key) || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'v' || e.key === 'V') {
         setHeldKey(null)
         setIsDragging(false)
         visitedCells.current.clear()
@@ -348,6 +349,7 @@ export function GridEditor() {
       }
 
       // Helper to perform held-key action at position
+      // 1=wall, 2=floor, 3=box, 4=block, 5=ref
       const doHeldAction = (x: number, y: number) => {
         const held = heldKeyRef.current
         if (!held) return
@@ -355,8 +357,8 @@ export function GridEditor() {
         if (visitedCells.current.has(cellKey)) return
         visitedCells.current.add(cellKey)
 
-        if (held === '1' || held === '2' || held === '3' || held === '4') {
-          const type = held === '1' ? 'wall' : held === '2' ? 'floor' : held === '3' ? 'block' : 'ref'
+        if (held === '1' || held === '2' || held === '3' || held === '4' || held === '5') {
+          const type = held === '1' ? 'wall' : held === '2' ? 'floor' : held === '3' ? 'box' : held === '4' ? 'block' : 'ref'
           actions.placeObjectAtPositionXY(x, y, type, !historyMarked.current)
           historyMarked.current = true
         } else if (held === 'delete') {
@@ -479,6 +481,7 @@ export function GridEditor() {
           break
 
         // Quick place objects with number keys
+        // 1=Wall, 2=Floor, 3=Box, 4=Block, 5=Ref
         case '1':
           e.preventDefault()
           actions.placeObjectAtSelection('wall')
@@ -489,9 +492,13 @@ export function GridEditor() {
           break
         case '3':
           e.preventDefault()
-          actions.placeObjectAtSelection('block')
+          actions.placeObjectAtSelection('box')
           break
         case '4':
+          e.preventDefault()
+          actions.placeObjectAtSelection('block')
+          break
+        case '5':
           e.preventDefault()
           actions.placeObjectAtSelection('ref')
           break

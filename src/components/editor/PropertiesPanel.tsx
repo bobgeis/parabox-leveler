@@ -498,16 +498,23 @@ function EmptyPositionPanel() {
         <Button
           variant="outline"
           size="sm"
+          onClick={() => actions.createObjectAtPosition('box')}
+        >
+          Box (3)
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => actions.createObjectAtPosition('block')}
         >
-          Block (3)
+          Block (4)
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => actions.createObjectAtPosition('ref')}
         >
-          Ref (4)
+          Ref (5)
         </Button>
       </div>
     </div>

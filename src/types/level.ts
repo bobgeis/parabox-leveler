@@ -121,6 +121,16 @@ export function createPlayerBlock(id: number, x: number, y: number): Block {
   })
 }
 
+// Helper to create a box (block with fillwithwalls=1, brownish yellow color)
+export function createBox(id: number, x: number, y: number): Block {
+  return createBlock(id, x, y, 3, 3, {
+    hue: 0.12,
+    sat: 0.7,
+    val: 0.85,
+    fillwithwalls: 1,
+  })
+}
+
 // Helper to create a wall
 export function createWall(x: number, y: number): Wall {
   return {
