@@ -538,6 +538,19 @@ export const actions = {
       return
     }
 
+    const block = getEditingBlock()
+
+    // Match drag-paste rules: don't paste into occupied cells (except Floor onto empty-floor)
+    const existingAtPos = block.children.filter((obj) => obj.x === x && obj.y === y)
+    const hasNonFloor = existingAtPos.some((obj) => obj.type !== 'Floor')
+    const hasFloor = existingAtPos.some((obj) => obj.type === 'Floor')
+
+    if (state.clipboard.type === 'Floor') {
+      if (hasFloor) return
+    } else {
+      if (hasNonFloor) return
+    }
+
     saveToHistory()
 
     // Deep clone the clipboard
@@ -545,12 +558,11 @@ export const actions = {
     pasted.x = x
     pasted.y = y
 
-    // If it's a Block, reassign IDs if they conflict
+    // If it's a Block, reassign IDs
     if (pasted.type === 'Block') {
       reassignBlockIds(pasted, state.level)
     }
 
-    const block = getEditingBlock()
     block.children.push(pasted)
 
     // Select the pasted object
