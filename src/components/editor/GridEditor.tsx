@@ -164,7 +164,7 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick, onMouseDo
   return (
     <div
       className={cn(
-        'relative aspect-square border border-border/50 cursor-pointer transition-colors',
+        'relative aspect-square border border-border/50 cursor-pointer transition-colors select-none',
         bgColor,
         borderStyle,
         isSelected && 'ring-2 ring-primary ring-offset-1'
