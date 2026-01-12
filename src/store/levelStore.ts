@@ -63,7 +63,7 @@ const initialState: EditorState = {
   editingBlockId: 0,
   tool: 'select',
   floorToolType: 'Button',
-  refToolIsExit: true,
+  refToolIsExit: false,
   refToolTargetId: 0,
   clipboard: null,
   modalOpen: false,
@@ -764,16 +764,19 @@ export function validateLevel(): string[] {
   return warnings
 }
 
-// Get all blocks for ref target selection
+// Get all blocks for ref target selection (excludes boxes/fillwithwalls=1)
 export function getAllBlocks(): { id: number; label: string }[] {
   const blocks: { id: number; label: string }[] = []
 
   function collect(obj: LevelObject, path: string) {
     if (obj.type === 'Block') {
-      blocks.push({
-        id: obj.id,
-        label: `${path}Block ${obj.id} (${obj.width}×${obj.height})`,
-      })
+      // Only include blocks that are not boxes (fillwithwalls !== 1)
+      if (obj.fillwithwalls !== 1) {
+        blocks.push({
+          id: obj.id,
+          label: `${path}Block ${obj.id} (${obj.width}×${obj.height})`,
+        })
+      }
       obj.children.forEach((child) => {
         if (child.type === 'Block') {
           collect(child, path + '  ')

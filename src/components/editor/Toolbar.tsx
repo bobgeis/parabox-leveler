@@ -187,7 +187,7 @@ function ExportDialog() {
   )
 }
 
-function SettingsDialog() {
+function HeaderDialog() {
   const snap = useSnapshot(state)
   const [open, setOpen] = useState(false)
 
@@ -195,12 +195,13 @@ function SettingsDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Settings className="w-4 h-4" />
+          <Settings className="w-4 h-4 mr-1" />
+          Header
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Level Settings</DialogTitle>
+          <DialogTitle>Level Header</DialogTitle>
           <DialogDescription>
             Configure level header options.
           </DialogDescription>
@@ -211,7 +212,7 @@ function SettingsDialog() {
               type="checkbox"
               id="shed"
               checked={snap.level.header.shed || false}
-              onChange={(e) => actions.updateHeader({ shed: e.target.checked })}
+              onChange={(e) => actions.updateHeader({ shed: e.target.checked ? true : undefined })}
             />
             <label htmlFor="shed" className="text-sm">Enable Shed behavior</label>
           </div>
@@ -220,20 +221,23 @@ function SettingsDialog() {
               type="checkbox"
               id="innerPush"
               checked={snap.level.header.innerPush || false}
-              onChange={(e) => actions.updateHeader({ innerPush: e.target.checked })}
+              onChange={(e) => actions.updateHeader({ innerPush: e.target.checked ? true : undefined })}
             />
             <label htmlFor="innerPush" className="text-sm">Enable Inner Push behavior</label>
           </div>
           <div className="flex items-center gap-2">
-            <label htmlFor="comment" className="text-sm w-24">Level Name:</label>
-            <input
-              type="text"
-              id="comment"
+            <label htmlFor="drawStyle" className="text-sm w-24">Draw Style:</label>
+            <select
+              id="drawStyle"
               className="flex-1 border rounded px-2 py-1 text-sm"
-              value={snap.level.header.comment || ''}
-              onChange={(e) => actions.updateHeader({ comment: e.target.value })}
-              placeholder="My Level"
-            />
+              value={snap.level.header.drawStyle || ''}
+              onChange={(e) => actions.updateHeader({ drawStyle: (e.target.value as 'tui' | 'grid' | 'oldstyle') || undefined })}
+            >
+              <option value="">Default</option>
+              <option value="tui">TUI</option>
+              <option value="grid">Grid</option>
+              <option value="oldstyle">Old Style</option>
+            </select>
           </div>
         </div>
         <DialogFooter>
@@ -261,6 +265,7 @@ export function Toolbar() {
 
       <ImportDialog />
       <ExportDialog />
+      <HeaderDialog />
 
       <Separator orientation="vertical" className="h-6" />
 
@@ -424,9 +429,6 @@ export function Toolbar() {
       </TooltipProvider>
 
       <div className="flex-1" />
-
-      {/* Settings */}
-      <SettingsDialog />
     </div>
   )
 }

@@ -73,6 +73,9 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick, onMouseDo
   for (const obj of objectsAtCell) {
     if (obj.type === 'Wall') {
       bgColor = 'bg-slate-700'
+      content = (
+        <span className="text-[20px] font-bold text-slate-400">#</span>
+      )
     } else if (obj.type === 'Floor') {
       bgColor = obj.floorType === 'PlayerButton' ? 'bg-yellow-500/50' : 'bg-green-500/50'
       content = (

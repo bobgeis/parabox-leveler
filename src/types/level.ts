@@ -63,11 +63,14 @@ export interface Block {
 
 export type LevelObject = Block | Wall | Floor | Ref
 
+export type DrawStyle = 'tui' | 'grid' | 'oldstyle'
+
 export interface LevelHeader {
   version: number
   comment?: string
   shed?: boolean
   innerPush?: boolean
+  drawStyle?: DrawStyle
   attemptOrder?: string
   customLevelMusic?: number
   customLevelPalette?: number

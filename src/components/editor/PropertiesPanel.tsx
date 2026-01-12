@@ -238,18 +238,18 @@ function FloorProperties() {
           onChange={(v) => actions.updateSelectedProperty('y', v)}
         />
 
-        <div className="grid grid-cols-2 items-center gap-2">
+        <div className="space-y-1">
           <Label className="text-xs">Type</Label>
           <Select
             value={obj.floorType}
             onValueChange={(v: string) => actions.updateSelectedProperty('floorType', v as 'Button' | 'PlayerButton')}
           >
-            <SelectTrigger className="h-7 text-xs">
+            <SelectTrigger className="h-7 text-xs w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="Button">Button</SelectItem>
-              <SelectItem value="PlayerButton">PlayerButton</SelectItem>
+              <SelectItem value="PlayerButton">Player Button</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -281,13 +281,13 @@ function RefProperties() {
           onChange={(v) => actions.updateSelectedProperty('y', v)}
         />
 
-        <div className="grid grid-cols-2 items-center gap-2">
+        <div className="space-y-1">
           <Label className="text-xs">Target Block</Label>
           <Select
             value={String(obj.id)}
             onValueChange={(v: string) => actions.updateSelectedProperty('id', parseInt(v))}
           >
-            <SelectTrigger className="h-7 text-xs">
+            <SelectTrigger className="h-7 text-xs w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -300,11 +300,21 @@ function RefProperties() {
           </Select>
         </div>
 
-        <CheckboxInput
-          label="Exit Reference"
-          checked={obj.exitblock === 1}
-          onChange={(v) => actions.updateSelectedProperty('exitblock', v ? 1 : 0)}
-        />
+        <div className="space-y-1">
+          <Label className="text-xs">Ref Type</Label>
+          <Select
+            value={String(obj.exitblock)}
+            onValueChange={(v: string) => actions.updateSelectedProperty('exitblock', parseInt(v))}
+          >
+            <SelectTrigger className="h-7 text-xs w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="0">Clone</SelectItem>
+              <SelectItem value="1">Exit Ref</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
 
         <Separator className="my-2" />
         <div className="text-xs text-muted-foreground">Infinite Exit</div>
@@ -412,6 +422,18 @@ function EditingBlockProperties() {
 
       <div className="space-y-2">
         <div className="text-xs text-muted-foreground">Flags</div>
+        <NumberInput
+          label="Zoom Factor"
+          value={editingBlock.zoomfactor}
+          onChange={(v) => actions.updateEditingBlockProperty('zoomfactor', v)}
+          min={0.1}
+          step={0.1}
+        />
+        <CheckboxInput
+          label="Fill With Walls"
+          checked={editingBlock.fillwithwalls === 1}
+          onChange={(v) => actions.updateEditingBlockProperty('fillwithwalls', v ? 1 : 0)}
+        />
         <CheckboxInput
           label="Player"
           checked={editingBlock.player === 1}
@@ -422,10 +444,11 @@ function EditingBlockProperties() {
           checked={editingBlock.possessable === 1}
           onChange={(v) => actions.updateEditingBlockProperty('possessable', v ? 1 : 0)}
         />
-        <CheckboxInput
+        <NumberInput
           label="Player Order"
-          checked={editingBlock.playerorder === 1}
-          onChange={(v) => actions.updateEditingBlockProperty('playerorder', v ? 1 : 0)}
+          value={editingBlock.playerorder}
+          onChange={(v) => actions.updateEditingBlockProperty('playerorder', v)}
+          min={0}
         />
         <CheckboxInput
           label="Flip Horizontal"
@@ -447,28 +470,6 @@ function EditingBlockProperties() {
   )
 }
 
-function HeaderProperties() {
-  const snap = useSnapshot(state)
-  const header = snap.level.header
-
-  return (
-    <div className="space-y-3">
-      <div className="text-sm font-medium">Level Options</div>
-      <div className="space-y-2">
-        <CheckboxInput
-          label="Shed"
-          checked={header.shed === true}
-          onChange={(v) => actions.updateHeaderProperty('shed', v ? true : undefined)}
-        />
-        <CheckboxInput
-          label="Inner Push"
-          checked={header.innerPush === true}
-          onChange={(v) => actions.updateHeaderProperty('innerPush', v ? true : undefined)}
-        />
-      </div>
-    </div>
-  )
-}
 
 function EmptyPositionPanel() {
   const snap = useSnapshot(state)
@@ -555,12 +556,6 @@ export function PropertiesPanel() {
             <EditingBlockProperties />
           )}
 
-          {snap.editingBlockId === 0 && (
-            <>
-              <Separator />
-              <HeaderProperties />
-            </>
-          )}
         </div>
       </ScrollArea>
     </div>
