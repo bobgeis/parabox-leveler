@@ -5,6 +5,7 @@
 import { useSnapshot } from 'valtio'
 import { state, actions, validateLevel, historyState } from '@/store/levelStore'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,169 @@ import {
   Link,
   Package,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function getNum(obj: Record<string, unknown>, key: string, fallback: number = 0): number {
+  const v = obj[key]
+  return typeof v === 'number' ? v : fallback
+}
+
+function getStr(obj: Record<string, unknown>, key: string, fallback: string = ''): string {
+  const v = obj[key]
+  return typeof v === 'string' ? v : fallback
+}
+
+function hsvToColor(h: number, s: number, v: number, alpha: number = 1): string {
+  const c = v * s
+  const x = c * (1 - Math.abs(((h * 6) % 2) - 1))
+  const m = v - c
+
+  let r = 0,
+    g = 0,
+    b = 0
+  const hue = h * 6
+
+  if (hue < 1) {
+    r = c
+    g = x
+  } else if (hue < 2) {
+    r = x
+    g = c
+  } else if (hue < 3) {
+    g = c
+    b = x
+  } else if (hue < 4) {
+    g = x
+    b = c
+  } else if (hue < 5) {
+    r = x
+    b = c
+  } else {
+    r = c
+    b = x
+  }
+
+  const toHex = (val: number) =>
+    Math.round((val + m) * 255)
+      .toString(16)
+      .padStart(2, '0')
+
+  if (alpha < 1) {
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}${Math.round(alpha * 255).toString(16).padStart(2, '0')}`
+  }
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
+}
+
+function ClipboardPreview({ obj }: { obj: unknown }) {
+  const o = isRecord(obj) ? obj : null
+  let bgColor: string | undefined
+  let content: ReactNode = null
+  let borderStyle = ''
+
+  if (o) {
+    if (o['type'] === 'Wall') {
+      bgColor = '#334155'
+      content = <span className="absolute inset-0 flex items-center justify-center text-[14px] font-bold text-slate-200">#</span>
+    } else if (o['type'] === 'Floor') {
+      const floorType = getStr(o, 'floorType')
+      bgColor = floorType === 'PlayerButton' ? '#eab30880' : '#22c55e80'
+      content = (
+        <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-center">
+          {floorType === 'PlayerButton' ? 'PB' : 'B'}
+        </span>
+      )
+    } else if (o['type'] === 'Block') {
+      const hue = getNum(o, 'hue')
+      const sat = getNum(o, 'sat')
+      const val = getNum(o, 'val')
+      const color = hsvToColor(hue, sat, val)
+      const darkerColor = hsvToColor(hue, sat, val * 0.6)
+      borderStyle = 'border-2 border-solid'
+      bgColor = color
+
+      const childrenValue = o['children']
+      const children = Array.isArray(childrenValue) ? childrenValue : []
+      const hasChildren = children.length > 0
+      const w = getNum(o, 'width')
+      const h = getNum(o, 'height')
+      content = (
+        <div className="absolute inset-0.5 rounded-sm flex items-center justify-center overflow-hidden" style={{ backgroundColor: color }}>
+          {hasChildren ? (
+            <div
+              className="absolute inset-0.5 grid"
+              style={{
+                gridTemplateColumns: `repeat(${w}, 1fr)`,
+                gridTemplateRows: `repeat(${h}, 1fr)`,
+                backgroundColor: darkerColor,
+                borderRadius: '2px',
+              }}
+            >
+              {Array.from({ length: h }).map((_, row) =>
+                Array.from({ length: w }).map((_, col) => {
+                  const cellY = h - 1 - row
+                  const cellX = col
+                  const childrenAtCell = children.filter(
+                    (c) => isRecord(c) && getNum(c, 'x') === cellX && getNum(c, 'y') === cellY
+                  )
+                  let cellColor = 'transparent'
+                  for (const child of childrenAtCell) {
+                    if (child['type'] === 'Wall') {
+                      cellColor = '#334155'
+                    } else if (child['type'] === 'Block') {
+                      cellColor = hsvToColor(getNum(child, 'hue'), getNum(child, 'sat'), getNum(child, 'val'))
+                    } else if (child['type'] === 'Floor') {
+                      cellColor = getStr(child, 'floorType') === 'PlayerButton' ? '#eab30880' : '#22c55e80'
+                    } else if (child['type'] === 'Ref') {
+                      cellColor = '#3b82f680'
+                    }
+                  }
+                  return <div key={`${cellX}-${cellY}`} style={{ backgroundColor: cellColor }} />
+                })
+              )}
+            </div>
+          ) : (
+            <span className="text-[16px] font-bold">
+              {getNum(o, 'player') ? '😶' : getNum(o, 'fillwithwalls') === 1 ? '✕' : getNum(o, 'id')}
+            </span>
+          )}
+          {hasChildren && (
+            <span className="absolute bottom-0 right-0.5 text-[7px] font-bold text-white/80 drop-shadow">
+              {getNum(o, 'player') ? '😶' : getNum(o, 'id')}
+            </span>
+          )}
+        </div>
+      )
+    } else if (o['type'] === 'Ref') {
+      borderStyle = 'border-2 border-dashed'
+      content = (
+        <div
+          className={cn(
+            'absolute inset-0.5 rounded-sm flex items-center justify-center text-[8px] font-bold border-2 border-dashed',
+            getNum(o, 'exitblock') === 1 ? 'border-blue-500' : 'border-blue-300'
+          )}
+          style={{ opacity: getNum(o, 'exitblock') === 1 ? 0.8 : 0.4 }}
+        >
+          →{getNum(o, 'id')}
+        </div>
+      )
+    }
+  }
+
+  return (
+    <div
+      className={cn('relative aspect-square w-9 border border-border/50 rounded-sm bg-muted/30 overflow-hidden', borderStyle)}
+      style={bgColor ? { backgroundColor: bgColor } : undefined}
+      title={o ? `Clipboard: ${String(o['type'])}` : 'Clipboard: Empty'}
+    >
+      {content}
+      {!o && <span className="absolute inset-0 flex items-center justify-center text-[8px] text-muted-foreground">Empty</span>}
+    </div>
+  )
+}
 
 function ImportDialog() {
   const [open, setOpen] = useState(false)
@@ -351,6 +514,8 @@ export function Toolbar() {
           <TooltipContent>Paste (V)</TooltipContent>
         </Tooltip>
       </TooltipProvider>
+
+      <ClipboardPreview obj={snap.clipboard} />
 
       <TooltipProvider>
         <Tooltip>
