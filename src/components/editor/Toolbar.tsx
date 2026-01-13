@@ -47,12 +47,12 @@ import { useState, type ReactNode } from 'react'
 const exampleLevelModules = import.meta.glob('/levels/**/*.txt', {
   as: 'raw',
   eager: true,
-}) as Record<string, string>
+}) as Record<string, unknown>
 
 const exampleLevelPreviewModules = import.meta.glob('/levels/**/*.png', {
   as: 'url',
   eager: true,
-}) as Record<string, string>
+}) as Record<string, unknown>
 
 type ExampleLevel = {
   key: string
@@ -65,9 +65,21 @@ function isLikelyLevelText(text: string): boolean {
   return text.trimStart().toLowerCase().startsWith('version')
 }
 
+function globToString(value: unknown): string | undefined {
+  if (typeof value === 'string') return value
+  if (isRecord(value) && typeof value['default'] === 'string') return value['default']
+  return undefined
+}
+
+function isLikelyLevelTextValue(value: unknown): boolean {
+  const text = globToString(value)
+  if (!text) return false
+  return isLikelyLevelText(text)
+}
+
 function getExampleLevels(): ExampleLevel[] {
   return Object.entries(exampleLevelModules)
-    .filter(([, text]) => isLikelyLevelText(text))
+    .filter(([, value]) => isLikelyLevelTextValue(value))
     .map(([key]) => {
       const rel = key.replace(/^\/levels\//, '')
       const parts = rel.split('/')
@@ -380,7 +392,7 @@ function NewImportDialog() {
   const examplesInFolder = selectedFolder ? examples.filter((e) => e.source === selectedSource && e.folder === selectedFolder) : []
 
   const selectedExamplePreviewUrl = selectedExampleKey
-    ? exampleLevelPreviewModules[selectedExampleKey.replace(/\.txt$/i, '.png')]
+    ? globToString(exampleLevelPreviewModules[selectedExampleKey.replace(/\.txt$/i, '.png')])
     : undefined
 
   const handleOpenChange = (isOpen: boolean) => {
@@ -415,13 +427,17 @@ function NewImportDialog() {
 
   const handleLoadExample = () => {
     if (!selectedExampleKey) return
-    const levelText = exampleLevelModules[selectedExampleKey]
+    const levelText = globToString(exampleLevelModules[selectedExampleKey])
+    if (!levelText) {
+      setError('Failed to load example level text.')
+      return
+    }
     const result = actions.importLevel(levelText)
     if (result.success) {
       handleOpenChange(false)
       setError(null)
     } else {
-      setError(result.error || 'Failed to import level')
+      setError(result.error || 'Failed to import example level')
     }
   }
 
