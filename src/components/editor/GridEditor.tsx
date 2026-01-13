@@ -619,7 +619,7 @@ export function GridEditor() {
           </button>
         )}
       </div>
-      <div className="flex justify-center">
+      <div className="w-fit mx-auto p-6">
         <div
           className="inline-grid border border-border rounded-md p-0.5"
           style={{
