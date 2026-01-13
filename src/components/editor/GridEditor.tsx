@@ -607,8 +607,8 @@ export function GridEditor() {
   }
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center p-4 bg-background">
-      <div className="mb-2 text-sm text-muted-foreground">
+    <div className="flex-1 min-w-0 flex flex-col p-4 bg-background overflow-auto">
+      <div className="mb-2 text-sm text-muted-foreground shrink-0">
         Editing: Block {editingBlock.id} ({width}×{height})
         {editingBlock.id !== 0 && (
           <button
@@ -619,14 +619,16 @@ export function GridEditor() {
           </button>
         )}
       </div>
-      <div
-        className="grid border border-border rounded-md p-0.5"
-        style={{
-          gridTemplateColumns: `repeat(${width}, 56px)`,
-          gridTemplateRows: `repeat(${height}, 56px)`,
-        }}
-      >
-        {cells}
+      <div className="flex justify-center">
+        <div
+          className="inline-grid border border-border rounded-md p-0.5"
+          style={{
+            gridTemplateColumns: `repeat(${width}, 56px)`,
+            gridTemplateRows: `repeat(${height}, 56px)`,
+          }}
+        >
+          {cells}
+        </div>
       </div>
     </div>
   )

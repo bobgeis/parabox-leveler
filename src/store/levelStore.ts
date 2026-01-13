@@ -618,20 +618,35 @@ export const actions = {
 
   moveSelected: (dx: number, dy: number) => {
     if (!state.selectedObject) return
-    state.selectedObject.x += dx
-    state.selectedObject.y += dy
+    const block = getEditingBlock()
+    const nextX = state.selectedObject.x + dx
+    const nextY = state.selectedObject.y + dy
+    state.selectedObject.x = Math.min(block.width - 1, Math.max(0, nextX))
+    state.selectedObject.y = Math.min(block.height - 1, Math.max(0, nextY))
   },
 
   moveSelectedWithHistory: (dx: number, dy: number) => {
     if (!state.selectedObject) return
     saveToHistory()
-    state.selectedObject.x += dx
-    state.selectedObject.y += dy
+    const block = getEditingBlock()
+    const nextX = state.selectedObject.x + dx
+    const nextY = state.selectedObject.y + dy
+    state.selectedObject.x = Math.min(block.width - 1, Math.max(0, nextX))
+    state.selectedObject.y = Math.min(block.height - 1, Math.max(0, nextY))
   },
 
   // Update object properties
   updateSelectedProperty: (key: string, value: unknown) => {
     if (!state.selectedObject) return
+    if (key === 'x' || key === 'y') {
+      const block = getEditingBlock()
+      const raw = typeof value === 'number' ? value : Number(value)
+      if (!Number.isFinite(raw)) return
+      const max = key === 'x' ? block.width - 1 : block.height - 1
+      const clamped = Math.min(max, Math.max(0, raw))
+      ;(state.selectedObject as unknown as Record<string, unknown>)[key] = clamped
+      return
+    }
     ;(state.selectedObject as unknown as Record<string, unknown>)[key] = value
   },
 
@@ -661,6 +676,32 @@ export const actions = {
   // Update editing block property
   updateEditingBlockProperty: (key: string, value: unknown) => {
     const block = getEditingBlock()
+    if ((key === 'x' || key === 'y') && state.editingBlockId !== 0) {
+      const raw = typeof value === 'number' ? value : Number(value)
+      if (!Number.isFinite(raw)) return
+
+      function findParent(obj: LevelObject, targetId: number): Block | null {
+        if (obj.type === 'Block') {
+          for (const child of obj.children) {
+            if (child.type === 'Block' && child.id === targetId) {
+              return obj
+            }
+            const found = findParent(child, targetId)
+            if (found) return found
+          }
+        }
+        return null
+      }
+
+      const parent = findParent(state.level.root, state.editingBlockId)
+      if (parent) {
+        const max = key === 'x' ? parent.width - 1 : parent.height - 1
+        const clamped = Math.min(max, Math.max(0, raw))
+        ;(block as unknown as Record<string, unknown>)[key] = clamped
+        return
+      }
+    }
+
     ;(block as unknown as Record<string, unknown>)[key] = value
   },
 
