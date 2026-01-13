@@ -49,6 +49,11 @@ const exampleLevelModules = import.meta.glob('/levels/**/*.txt', {
   eager: true,
 }) as Record<string, string>
 
+const exampleLevelPreviewModules = import.meta.glob('/levels/**/*.png', {
+  as: 'url',
+  eager: true,
+}) as Record<string, string>
+
 type ExampleLevel = {
   key: string
   source: string
@@ -367,6 +372,10 @@ function NewImportDialog() {
   const folders = Array.from(new Set(examples.filter((e) => e.source === selectedSource).map((e) => e.folder))).sort((a, b) => a.localeCompare(b))
   const examplesInFolder = selectedFolder ? examples.filter((e) => e.source === selectedSource && e.folder === selectedFolder) : []
 
+  const selectedExamplePreviewUrl = selectedExampleKey
+    ? exampleLevelPreviewModules[selectedExampleKey.replace(/\.txt$/i, '.png')]
+    : undefined
+
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen)
     actions.setModalOpen(isOpen)
@@ -449,74 +458,88 @@ function NewImportDialog() {
           </TabsContent>
 
           <TabsContent value="examples" className="mt-4">
-            <div className="space-y-3">
+            <div className="flex gap-4">
               {examples.length === 0 ? (
                 <div className="text-sm text-muted-foreground">No example levels found.</div>
               ) : (
                 <>
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="exampleSourceSelect" className="text-sm w-24">Source:</label>
-                    <select
-                      id="exampleSourceSelect"
-                      className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
-                      value={selectedSource}
-                      onChange={(e) => {
-                        const nextSource = e.target.value
-                        setSelectedSource(nextSource)
+                  <div className="flex-1 space-y-3 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="exampleSourceSelect" className="text-sm w-24">Source:</label>
+                      <select
+                        id="exampleSourceSelect"
+                        className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
+                        value={selectedSource}
+                        onChange={(e) => {
+                          const nextSource = e.target.value
+                          setSelectedSource(nextSource)
 
-                        const nextFolders = Array.from(new Set(examples.filter((ex) => ex.source === nextSource).map((ex) => ex.folder))).sort((a, b) => a.localeCompare(b))
-                        const nextFolder = nextFolders[0] || ''
-                        setSelectedFolder(nextFolder)
+                          const nextFolders = Array.from(new Set(examples.filter((ex) => ex.source === nextSource).map((ex) => ex.folder))).sort((a, b) => a.localeCompare(b))
+                          const nextFolder = nextFolders[0] || ''
+                          setSelectedFolder(nextFolder)
 
-                        const first = examples.find((ex) => ex.source === nextSource && ex.folder === nextFolder)
-                        if (first) setSelectedExampleKey(first.key)
-                      }}
-                    >
-                      {sources.map((source) => (
-                        <option key={source} value={source}>
-                          {source}
-                        </option>
-                      ))}
-                    </select>
+                          const first = examples.find((ex) => ex.source === nextSource && ex.folder === nextFolder)
+                          if (first) setSelectedExampleKey(first.key)
+                        }}
+                      >
+                        {sources.map((source) => (
+                          <option key={source} value={source}>
+                            {source}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="exampleFolderSelect" className="text-sm w-24">Folder:</label>
+                      <select
+                        id="exampleFolderSelect"
+                        className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
+                        value={selectedFolder}
+                        onChange={(e) => {
+                          const nextFolder = e.target.value
+                          setSelectedFolder(nextFolder)
+                          const first = examples.find((ex) => ex.source === selectedSource && ex.folder === nextFolder)
+                          if (first) setSelectedExampleKey(first.key)
+                        }}
+                      >
+                        {folders.map((folder) => (
+                          <option key={folder} value={folder}>
+                            {folder}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label htmlFor="exampleLevelSelect" className="text-sm w-24">Level:</label>
+                      <select
+                        id="exampleLevelSelect"
+                        className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
+                        value={selectedExampleKey}
+                        onChange={(e) => setSelectedExampleKey(e.target.value)}
+                      >
+                        {examplesInFolder.map((ex) => (
+                          <option key={ex.key} value={ex.key}>
+                            {ex.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <Button onClick={handleLoadExample}>Load Example</Button>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="exampleFolderSelect" className="text-sm w-24">Folder:</label>
-                    <select
-                      id="exampleFolderSelect"
-                      className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
-                      value={selectedFolder}
-                      onChange={(e) => {
-                        const nextFolder = e.target.value
-                        setSelectedFolder(nextFolder)
-                        const first = examples.find((ex) => ex.source === selectedSource && ex.folder === nextFolder)
-                        if (first) setSelectedExampleKey(first.key)
-                      }}
-                    >
-                      {folders.map((folder) => (
-                        <option key={folder} value={folder}>
-                          {folder}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="w-40 shrink-0">
+                    {selectedExamplePreviewUrl ? (
+                      <img
+                        src={selectedExamplePreviewUrl}
+                        alt="Level preview"
+                        className="w-40 h-40 rounded border bg-muted object-contain"
+                      />
+                    ) : (
+                      <div className="w-40 h-40 rounded border bg-muted" />
+                    )}
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="exampleLevelSelect" className="text-sm w-24">Level:</label>
-                    <select
-                      id="exampleLevelSelect"
-                      className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
-                      value={selectedExampleKey}
-                      onChange={(e) => setSelectedExampleKey(e.target.value)}
-                    >
-                      {examplesInFolder.map((ex) => (
-                        <option key={ex.key} value={ex.key}>
-                          {ex.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <Button onClick={handleLoadExample}>Load Example</Button>
                 </>
               )}
             </div>
