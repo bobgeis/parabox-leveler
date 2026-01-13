@@ -41,6 +41,13 @@ function serializeWall(wall: Wall): string {
 
 // Serialize a Floor to its line format
 function serializeFloor(floor: Floor): string {
+  if (floor.floorType === 'Info') {
+    const encoded = (floor.infoText ?? '').replace(/\n/g, '\\n').replace(/ /g, '_')
+    if (encoded) {
+      return ['Floor', floor.x, floor.y, floor.floorType, encoded].join(' ')
+    }
+    return ['Floor', floor.x, floor.y, floor.floorType].join(' ')
+  }
   return ['Floor', floor.x, floor.y, floor.floorType].join(' ')
 }
 

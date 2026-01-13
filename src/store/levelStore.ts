@@ -18,7 +18,7 @@ import { parseLevel } from '@/lib/parser'
 import { serializeLevel } from '@/lib/serializer'
 
 export type Tool = 'select' | 'block' | 'wall' | 'floor' | 'ref'
-export type FloorToolType = 'Button' | 'PlayerButton'
+export type FloorToolType = 'Button' | 'PlayerButton' | 'FastTravel' | 'Info'
 
 interface EditorState {
   // The level being edited

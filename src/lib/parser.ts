@@ -15,7 +15,11 @@ import type {
 
 // Remove comments (text in parentheses) from a line
 function stripComments(line: string): string {
-  return line.replace(/\([^)]*\)/g, '').trim()
+  // Comments are parenthesized segments that are either:
+  // - the entire line (handled elsewhere for header comment lines), or
+  // - preceded by whitespace (e.g. "... (comment)")
+  // Parentheses that are part of a token (e.g. Info text "_ (" not present) must be preserved.
+  return line.replace(/(^|\s)\([^)]*\)/g, '$1').trim()
 }
 
 // Count leading tabs to determine nesting level
@@ -66,11 +70,18 @@ function parseWall(parts: string[]): Wall {
 
 // Parse a Floor line
 function parseFloor(parts: string[]): Floor {
+  const floorType = parts[3] as FloorType
+  let infoText: string | undefined
+  if (floorType === 'Info' && parts.length > 4) {
+    const encoded = parts.slice(4).join(' ')
+    infoText = encoded.replace(/\\n/g, '\n').replace(/_/g, ' ')
+  }
   return {
     type: 'Floor',
     x: parseFloat(parts[1]),
     y: parseFloat(parts[2]),
-    floorType: parts[3] as FloorType,
+    floorType,
+    infoText,
   }
 }
 

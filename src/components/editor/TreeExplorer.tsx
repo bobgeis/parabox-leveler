@@ -56,7 +56,20 @@ function TreeNode({ object, path, depth }: TreeNodeProps) {
       label = `Wall (${object.x}, ${object.y})`
       break
     case 'Floor':
-      icon = <CircleDot className={cn('w-3 h-3', object.floorType === 'PlayerButton' ? 'text-yellow-500' : 'text-green-500')} />
+      icon = (
+        <CircleDot
+          className={cn(
+            'w-3 h-3',
+            object.floorType === 'PlayerButton'
+              ? 'text-yellow-500'
+              : object.floorType === 'FastTravel'
+                ? 'text-cyan-500'
+                : object.floorType === 'Info'
+                  ? 'text-orange-500'
+                  : 'text-green-500'
+          )}
+        />
+      )
       label = `${object.floorType} (${object.x}, ${object.y})`
       break
     case 'Ref':

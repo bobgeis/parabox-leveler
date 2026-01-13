@@ -1,7 +1,9 @@
 
 # Patrick Parabox Custom Levels Notes
 
-- Custom levels should be stored in User/Library/Application Support/com.PatrickTraynor.PatricksParabox/custom_levels
+- Custom levels should be stored in
+  - MacOS: /Users/(Username)/Library/Application Support/com.PatrickTraynor.PatricksParabox/custom_levels
+  - Windows: C:\Users\(Username)\AppData\LocalLow\Patrick Traynor\Patrick's Parabox\custom_levels
 - They should be stored as .txt files.
 - There is more information here: https://www.patricksparabox.com/custom-levels
 
@@ -83,6 +85,11 @@ After the # line, objects are listed. *Tab* indentation indicates block children
     A wall.
     eg: `Wall 3 4 0 0 0`
 
-- Floor x y type
-    A floor object. Types are: Button, PlayerButton
-    eg: `Floor 1 0 PlayerButton`
+- Floor x y type infotext
+    A floor object. Types are: Button, PlayerButton, Info, FastTravel
+    - type - type of floor. One of Button, PlayerButton, Info, FastTravel
+    - infotext - text to display when player steps on this Info type Floor. Spaces must be `_` and newlines must be `\n`
+    eg:
+      - `Floor 1 0 PlayerButton`
+      - `Floor 1 0 Info "Hello_World!\nThis_is_info_text."`
+

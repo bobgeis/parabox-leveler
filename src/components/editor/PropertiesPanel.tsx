@@ -348,7 +348,14 @@ function FloorProperties() {
           <Label className="text-xs">Type</Label>
           <Select
             value={obj.floorType}
-            onValueChange={(v: string) => actions.updateSelectedProperty('floorType', v as 'Button' | 'PlayerButton')}
+            onValueChange={(v: string) => {
+              actions.updateSelectedProperty('floorType', v as 'Button' | 'PlayerButton' | 'FastTravel' | 'Info')
+              if (v !== 'Info') {
+                actions.updateSelectedProperty('infoText', undefined)
+              } else if (obj.infoText === undefined) {
+                actions.updateSelectedProperty('infoText', '')
+              }
+            }}
           >
             <SelectTrigger className="h-7 text-xs w-full">
               <SelectValue />
@@ -356,9 +363,23 @@ function FloorProperties() {
             <SelectContent>
               <SelectItem value="Button">Button</SelectItem>
               <SelectItem value="PlayerButton">Player Button</SelectItem>
+              <SelectItem value="FastTravel">Fast Travel</SelectItem>
+              <SelectItem value="Info">Info</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {obj.floorType === 'Info' && (
+          <div className="space-y-1">
+            <Label className="text-xs">Info Text</Label>
+            <textarea
+              className="w-full h-24 p-2 border rounded-md text-xs bg-muted"
+              value={obj.infoText ?? ''}
+              onChange={(e) => actions.updateSelectedProperty('infoText', e.target.value)}
+              placeholder="Type info text here..."
+            />
+          </div>
+        )}
       </div>
     </div>
   )

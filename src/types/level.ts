@@ -3,13 +3,14 @@
  * Coordinate system: (0,0) is lower-left, Y increases upward
  */
 
-export type FloorType = 'Button' | 'PlayerButton'
+export type FloorType = 'Button' | 'PlayerButton' | 'FastTravel' | 'Info'
 
 export interface Floor {
   type: 'Floor'
   x: number
   y: number
   floorType: FloorType
+  infoText?: string
 }
 
 export interface Wall {
@@ -147,12 +148,13 @@ export function createWall(x: number, y: number): Wall {
 }
 
 // Helper to create a floor
-export function createFloor(x: number, y: number, floorType: FloorType): Floor {
+export function createFloor(x: number, y: number, floorType: FloorType, infoText?: string): Floor {
   return {
     type: 'Floor',
     x,
     y,
     floorType,
+    infoText,
   }
 }
 

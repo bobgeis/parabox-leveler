@@ -151,10 +151,17 @@ function ClipboardPreview({ obj }: { obj: unknown }) {
       content = <span className="absolute inset-0 flex items-center justify-center text-[14px] font-bold text-slate-200">#</span>
     } else if (o['type'] === 'Floor') {
       const floorType = getStr(o, 'floorType')
-      bgColor = floorType === 'PlayerButton' ? '#eab30880' : '#22c55e80'
+      bgColor =
+        floorType === 'PlayerButton'
+          ? '#eab30880'
+          : floorType === 'FastTravel'
+            ? '#06b6d480'
+            : floorType === 'Info'
+              ? '#f9731680'
+              : '#22c55e80'
       content = (
-        <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-center">
-          {floorType === 'PlayerButton' ? 'PB' : 'B'}
+        <span className="absolute inset-0 flex items-center justify-center text-[12px] font-bold text-slate-800">
+          {floorType === 'PlayerButton' ? 'PB' : floorType === 'FastTravel' ? 'FT' : floorType === 'Info' ? 'I' : 'B'}
         </span>
       )
     } else if (o['type'] === 'Block') {

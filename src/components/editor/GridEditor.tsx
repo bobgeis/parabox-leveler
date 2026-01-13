@@ -77,10 +77,23 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick, onMouseDo
         <span className="absolute inset-0 flex items-center justify-center text-[20px] font-bold text-slate-400">#</span>
       )
     } else if (obj.type === 'Floor') {
-      bgColor = obj.floorType === 'PlayerButton' ? 'bg-yellow-500/50' : 'bg-green-500/50'
+      bgColor =
+        obj.floorType === 'PlayerButton'
+          ? 'bg-yellow-500/50'
+          : obj.floorType === 'FastTravel'
+            ? 'bg-cyan-500/50'
+            : obj.floorType === 'Info'
+              ? 'bg-orange-500/50'
+              : 'bg-green-500/50'
       content = (
         <span className="text-[8px] font-bold text-center">
-          {obj.floorType === 'PlayerButton' ? 'PB' : 'B'}
+          {obj.floorType === 'PlayerButton'
+            ? 'PB'
+            : obj.floorType === 'FastTravel'
+              ? 'FT'
+              : obj.floorType === 'Info'
+                ? 'I'
+                : 'B'}
         </span>
       )
     } else if (obj.type === 'Block') {
@@ -120,7 +133,14 @@ function GridCell({ x, y, objects, isSelected, onClick, onDoubleClick, onMouseDo
                     } else if (child.type === 'Block') {
                       cellColor = hsvToColor(child.hue, child.sat, child.val)
                     } else if (child.type === 'Floor') {
-                      cellColor = child.floorType === 'PlayerButton' ? '#eab30880' : '#22c55e80'
+                      cellColor =
+                        child.floorType === 'PlayerButton'
+                          ? '#eab30880'
+                          : child.floorType === 'FastTravel'
+                            ? '#06b6d480'
+                            : child.floorType === 'Info'
+                              ? '#f9731680'
+                              : '#22c55e80'
                     } else if (child.type === 'Ref') {
                       cellColor = '#3b82f680'
                     }
