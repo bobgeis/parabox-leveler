@@ -44,12 +44,12 @@ import {
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
-const exampleLevelModules = import.meta.glob('/levels/**/*.txt', {
-  as: 'raw',
+const exampleLevelModules = import.meta.glob(['/levels/**/*.txt', '/src/levels/**/*.txt'], {
+  as: 'url',
   eager: true,
 }) as Record<string, unknown>
 
-const exampleLevelPreviewModules = import.meta.glob('/levels/**/*.png', {
+const exampleLevelPreviewModules = import.meta.glob(['/levels/**/*.png', '/src/levels/**/*.png'], {
   as: 'url',
   eager: true,
 }) as Record<string, unknown>
@@ -61,27 +61,16 @@ type ExampleLevel = {
   name: string
 }
 
-function isLikelyLevelText(text: string): boolean {
-  return text.trimStart().toLowerCase().startsWith('version')
-}
-
 function globToString(value: unknown): string | undefined {
   if (typeof value === 'string') return value
   if (isRecord(value) && typeof value['default'] === 'string') return value['default']
   return undefined
 }
 
-function isLikelyLevelTextValue(value: unknown): boolean {
-  const text = globToString(value)
-  if (!text) return false
-  return isLikelyLevelText(text)
-}
-
 function getExampleLevels(): ExampleLevel[] {
   return Object.entries(exampleLevelModules)
-    .filter(([, value]) => isLikelyLevelTextValue(value))
     .map(([key]) => {
-      const rel = key.replace(/^\/levels\//, '')
+      const rel = key.replace(/^\/(?:src\/)?levels\//, '')
       const parts = rel.split('/')
       const source = parts.shift() ?? '(unknown)'
       const file = parts.pop() ?? rel
@@ -425,13 +414,26 @@ function NewImportDialog() {
     }
   }
 
-  const handleLoadExample = () => {
+  const handleLoadExample = async () => {
     if (!selectedExampleKey) return
-    const levelText = globToString(exampleLevelModules[selectedExampleKey])
-    if (!levelText) {
-      setError('Failed to load example level text.')
+    const levelUrl = globToString(exampleLevelModules[selectedExampleKey])
+    if (!levelUrl) {
+      setError('Failed to resolve example level URL.')
       return
     }
+    let levelText: string
+    try {
+      const res = await fetch(levelUrl)
+      if (!res.ok) {
+        setError(`Failed to fetch example level (HTTP ${res.status}).`)
+        return
+      }
+      levelText = await res.text()
+    } catch {
+      setError('Failed to fetch example level.')
+      return
+    }
+
     const result = actions.importLevel(levelText)
     if (result.success) {
       handleOpenChange(false)
