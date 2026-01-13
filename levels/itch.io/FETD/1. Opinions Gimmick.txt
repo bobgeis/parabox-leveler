@@ -1,0 +1,23 @@
+version 4
+#
+Block -1 -1 0 11 11 0.15 0.8 1 1 0 0 0 0 0 0 0
+	Block 5 5 2 5 5 0.9 1 0.7 1 1 1 1 0 0 0 0
+	Wall 0 10 0 0 0
+	Block 10 10 1 2 2 1 1 1 1 0 0 0 0 0 0 0
+		Wall 0 1 0 0 0
+		Floor 1 1 Button
+	Ref 1 1 0 1 0 0 0 0 0 0 0 0 0 0 0
+	Floor 0 9 Button
+	Floor 5 5 PlayerButton
+	Block 2 5 4 1 1 0.55 1 1 1 1 0 0 0 0 0 0
+	Block 8 5 4 1 1 0.55 1 1 1 1 0 0 0 0 0 0
+	Block 5 8 4 1 1 0.55 1 1 1 1 0 0 0 0 0 0
+	Block 5 2 4 1 1 0.55 1 1 1 1 0 0 0 0 0 0
+	Block 10 0 3 5 5 0 0 0.25 1 0 0 0 0 0 0 0
+		Floor 1 2 Button
+		Floor 2 2 Button
+		Floor 3 2 Button
+	Floor 9 9 Button
+	Floor 1 10 Button
+	
+		

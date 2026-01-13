@@ -1,0 +1,43 @@
+version 4
+custom_level_music 14
+#
+Block 0 0 1 9 9 0.7 0.5 0.6 1 0 0 0 0 0 0 0
+	Block 4 0 7 3 3 0.15 0.6 0.6 1 0 0 0 0 0 0 0
+		Wall 2 1 0 0 0
+		Wall 2 2 0 0 0
+		Wall 1 2 0 0 0
+		Wall 0 2 0 0 0
+		Wall 0 0 0 0 0
+		Wall 1 0 0 0 0
+		Wall 2 0 0 0 0
+		Floor 1 1 Button
+	Block 4 2 3 1 1 0.6 0.4 0.7 1 1 0 0 0 0 0 0
+	Block 1 2 2 1 1 0.9 1 0.7 1 1 1 1 0 0 0 0
+	Block 4 4 4 1 1 0.6 0.4 0.7 1 1 0 0 0 0 0 0
+	Block 4 8 0 3 3 0.15 0.6 0.6 1 0 0 0 0 0 0 0
+		Wall 0 1 0 0 0
+		Wall 0 0 0 0 0
+		Wall 2 1 0 0 0
+		Wall 2 0 0 0 0
+		Wall 1 2 0 0 0
+		Wall 2 2 0 0 0
+		Wall 0 2 0 0 0
+		Floor 1 1 Button
+	Block 7 2 6 3 3 0.15 0.6 0.6 1 0 0 0 0 0 0 0
+		Wall 2 2 0 0 0
+		Wall 1 2 0 0 0
+		Wall 2 0 0 0 0
+		Wall 1 0 0 0 0
+		Wall 0 0 0 0 0
+		Wall 0 1 0 0 0
+		Wall 0 2 0 0 0
+		Floor 1 1 PlayerButton
+	Wall 5 4 0 0 0
+	Wall 6 4 0 0 0
+	Wall 3 4 0 0 0
+	Wall 2 4 0 0 0
+	Wall 1 4 0 0 0
+	Wall 8 4 0 0 0
+	Wall 7 4 0 0 0
+	Ref 0 0 1 1 0 0 0 0 -1 0 0 0 0 0 0
+	Wall 0 4 0 0 0

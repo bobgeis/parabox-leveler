@@ -1,0 +1,26 @@
+version 4
+custom_level_music 20
+#
+Block -1 -1 0 5 5 0 0 0.45 1 0 0 0 0 0 1 0
+	Block 1 2 1 5 5 0.9 1 0.7 1 1 1 1 0 0 0 0
+	Block 2 3 2 5 5 0.4 0.6 0.6 1 0 0 0 0 0 0 0
+		Wall 2 0 0 0 0
+		Wall 2 4 0 0 0
+		Wall 1 4 0 0 0
+		Wall 0 1 0 0 0
+		Wall 0 0 0 0 0
+		Wall 1 0 0 0 0
+		Wall 3 0 0 0 0
+		Wall 4 0 0 0 0
+		Wall 4 1 0 0 0
+		Wall 4 3 0 0 0
+		Wall 4 4 0 0 0
+		Wall 3 4 0 0 0
+		Wall 0 3 0 0 0
+		Wall 0 4 0 0 0
+		Floor 2 2 Button
+	Ref 3 2 0 0 0 0 0 0 -1 0 0 0 1 0 0
+	Ref 2 1 0 0 0 0 0 0 -1 0 0 0 0 0 0
+	Wall 2 2 0 0 0
+	Floor 1 2 PlayerButton
+	Ref -1 -1 0 1 0 0 0 0 -1 0 0 0 0 1 0

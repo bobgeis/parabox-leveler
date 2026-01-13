@@ -1,0 +1,65 @@
+version 4
+attempt_order push,eat,possess
+custom_level_music 14
+custom_level_palette -1
+#
+Block -1 -1 0 9 9 0.07 0.80 1 1 0 0 0 0 0 0 0
+	Wall 0 0 0 0 0
+	Wall 0 1 0 0 0
+	Wall 0 2 0 0 0
+	Wall 0 3 0 0 0
+	Wall 0 4 0 0 0
+	Wall 0 5 0 0 0
+	Wall 0 6 0 0 0
+	Wall 0 7 0 0 0
+	Wall 0 8 0 0 0
+	Wall 1 0 0 0 0
+	Wall 1 1 0 0 0
+	Wall 1 8 0 0 0
+	Wall 2 0 0 0 0
+	Wall 2 1 0 0 0
+	Wall 2 8 0 0 0
+	Wall 3 0 0 0 0
+	Wall 3 1 0 0 0
+	Block 3 3 1 5 5 0.90 1 0.70 1 1 1 1 0 0 0 0
+	Block 3 5 3 5 5 0.60 0.80 1 1 1 0 0 0 0 0 0
+	Wall 4 0 0 0 0
+	Wall 4 1 0 0 0
+	Wall 5 0 0 0 0
+	Wall 5 1 0 0 0
+	Ref 5 3 0 1 0 0 0 0 -1 0 0 0 0 0 0
+	Block 5 5 4 5 5 0.80 0.80 0.80 1 0 0 0 0 0 0 0
+		Wall 0 0 0 0 0
+		Wall 0 1 0 0 0
+		Wall 0 2 0 0 0
+		Wall 0 3 0 0 0
+		Wall 0 4 0 0 0
+		Wall 1 0 0 0 0
+		Wall 1 1 0 0 0
+		Floor 1 2 Button
+		Wall 2 0 0 0 0
+		Wall 2 1 0 0 0
+		Floor 2 2 PlayerButton
+		Wall 3 0 0 0 0
+		Wall 3 1 0 0 0
+		Floor 3 2 Button
+		Wall 4 0 0 0 0
+		Wall 4 1 0 0 0
+		Wall 4 2 0 0 0
+		Wall 4 3 0 0 0
+		Wall 4 4 0 0 0
+	Wall 6 0 0 0 0
+	Wall 6 1 0 0 0
+	Wall 6 8 0 0 0
+	Wall 7 0 0 0 0
+	Wall 7 1 0 0 0
+	Wall 7 8 0 0 0
+	Wall 8 0 0 0 0
+	Wall 8 1 0 0 0
+	Wall 8 2 0 0 0
+	Wall 8 3 0 0 0
+	Wall 8 4 0 0 0
+	Wall 8 5 0 0 0
+	Wall 8 6 0 0 0
+	Wall 8 7 0 0 0
+	Wall 8 8 0 0 0

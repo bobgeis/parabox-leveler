@@ -1,0 +1,61 @@
+version 4
+attempt_order push,eat,possess
+custom_level_music 12
+custom_level_palette -1
+#
+Block -1 -1 0 9 9 0.50 1 0.90 1 0 0 0 0 0 0 0
+	Wall 0 0 0 0 0
+	Wall 0 1 0 0 0
+	Wall 0 2 0 0 0
+	Wall 0 3 0 0 0
+	Wall 0 4 0 0 0
+	Wall 0 5 0 0 0
+	Wall 0 6 0 0 0
+	Wall 0 7 0 0 0
+	Wall 0 8 0 0 0
+	Wall 1 0 0 0 0
+	Wall 1 8 0 0 0
+	Wall 2 0 0 0 0
+	Block 2 3 3 5 5 0.60 0.80 1 1 0 0 0 0 0 0 0
+		Block 0 0 13 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+		Floor 0 0 Button
+		Block 0 4 10 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+		Floor 0 4 Button
+		Floor 2 2 PlayerButton
+		Block 4 0 12 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+		Floor 4 0 Button
+		Block 4 4 11 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+		Floor 4 4 Button
+	Block 2 5 1 5 5 0.90 1 0.70 1 1 1 1 0 0 0 0
+	Wall 2 8 0 0 0
+	Wall 3 0 0 0 0
+	Wall 3 8 0 0 0
+	Wall 4 0 0 0 0
+	Wall 4 8 0 0 0
+	Wall 5 0 0 0 0
+	Wall 5 8 0 0 0
+	Wall 6 0 0 0 0
+	Block 6 3 5 3 3 0.10 0.80 1 1 0 0 0 0 0 0 0
+		Block 1 1 4 5 5 0.40 0.80 1 1 0 0 0 0 0 0 0
+			Block 0 0 8 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+			Floor 0 0 Button
+			Block 0 4 6 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+			Floor 0 4 Button
+			Floor 2 2 PlayerButton
+			Block 4 0 9 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+			Floor 4 0 Button
+			Block 4 4 7 5 5 0.10 0.80 1 1 1 0 0 0 0 0 0
+			Floor 4 4 Button
+	Block 6 5 2 5 5 0.90 1 0.70 1 1 1 1 1 0 0 0
+	Wall 6 8 0 0 0
+	Wall 7 0 0 0 0
+	Wall 7 8 0 0 0
+	Wall 8 0 0 0 0
+	Wall 8 1 0 0 0
+	Wall 8 2 0 0 0
+	Wall 8 3 0 0 0
+	Wall 8 4 0 0 0
+	Wall 8 5 0 0 0
+	Wall 8 6 0 0 0
+	Wall 8 7 0 0 0
+	Wall 8 8 0 0 0
