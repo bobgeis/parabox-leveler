@@ -22,6 +22,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   FilePlus,
   Upload,
@@ -42,6 +43,41 @@ import {
   Package,
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
+
+const exampleLevelModules = import.meta.glob('/levels/**/*.txt', {
+  as: 'raw',
+  eager: true,
+}) as Record<string, string>
+
+type ExampleLevel = {
+  key: string
+  source: string
+  folder: string
+  name: string
+}
+
+function isLikelyLevelText(text: string): boolean {
+  return text.trimStart().toLowerCase().startsWith('version')
+}
+
+function getExampleLevels(): ExampleLevel[] {
+  return Object.entries(exampleLevelModules)
+    .filter(([, text]) => isLikelyLevelText(text))
+    .map(([key]) => {
+      const rel = key.replace(/^\/levels\//, '')
+      const parts = rel.split('/')
+      const source = parts.shift() ?? '(unknown)'
+      const file = parts.pop() ?? rel
+      const folder = parts.length > 0 ? parts.join('/') : '(root)'
+      const name = file.replace(/\.txt$/i, '')
+      return { key, source, folder, name }
+    })
+    .sort((a, b) => {
+      if (a.source !== b.source) return a.source.localeCompare(b.source)
+      if (a.folder !== b.folder) return a.folder.localeCompare(b.folder)
+      return a.name.localeCompare(b.name)
+    })
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -317,15 +353,43 @@ function SaveLoadDialog() {
   )
 }
 
-function ImportDialog() {
+function NewImportDialog() {
   const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState<'new' | 'examples' | 'import'>('new')
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [selectedSource, setSelectedSource] = useState<string>('')
+  const [selectedFolder, setSelectedFolder] = useState<string>('')
+  const [selectedExampleKey, setSelectedExampleKey] = useState<string>('')
 
-  const handleImport = () => {
+  const examples = getExampleLevels()
+  const sources = Array.from(new Set(examples.map((e) => e.source))).sort((a, b) => a.localeCompare(b))
+  const folders = Array.from(new Set(examples.filter((e) => e.source === selectedSource).map((e) => e.folder))).sort((a, b) => a.localeCompare(b))
+  const examplesInFolder = selectedFolder ? examples.filter((e) => e.source === selectedSource && e.folder === selectedFolder) : []
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen)
+    actions.setModalOpen(isOpen)
+    if (isOpen) {
+      setError(null)
+      if (examples.length > 0) {
+        const defaultSource = selectedSource || sources[0]
+        setSelectedSource(defaultSource)
+
+        const foldersInSource = Array.from(new Set(examples.filter((e) => e.source === defaultSource).map((e) => e.folder))).sort((a, b) => a.localeCompare(b))
+        const defaultFolder = (defaultSource === selectedSource ? selectedFolder : '') || foldersInSource[0]
+        setSelectedFolder(defaultFolder)
+
+        const firstInFolder = examples.find((e) => e.source === defaultSource && e.folder === defaultFolder)
+        if (firstInFolder) setSelectedExampleKey(firstInFolder.key)
+      }
+    }
+  }
+
+  const handleImportText = () => {
     const result = actions.importLevel(text)
     if (result.success) {
-      setOpen(false)
+      handleOpenChange(false)
       setText('')
       setError(null)
     } else {
@@ -333,41 +397,166 @@ function ImportDialog() {
     }
   }
 
+  const handleLoadExample = () => {
+    if (!selectedExampleKey) return
+    const levelText = exampleLevelModules[selectedExampleKey]
+    const result = actions.importLevel(levelText)
+    if (result.success) {
+      handleOpenChange(false)
+      setError(null)
+    } else {
+      setError(result.error || 'Failed to import level')
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <Upload className="w-4 h-4 mr-1" />
-          Import
+          <FilePlus className="w-4 h-4 mr-1" />
+          New/Import
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Import Level</DialogTitle>
+          <DialogTitle>New / Import</DialogTitle>
           <DialogDescription>
-            Paste your level text below. The format should match Patrick's Parabox custom level format.
+            Start a new level, load an example, or import from text.
           </DialogDescription>
         </DialogHeader>
-        <textarea
-          className="w-full h-64 p-2 border rounded-md font-mono text-xs bg-muted"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="version 4
+
+        <Tabs value={tab} onValueChange={(v) => setTab(v as 'new' | 'examples' | 'import')}>
+          <TabsList className="grid grid-cols-3">
+            <TabsTrigger value="new">New</TabsTrigger>
+            <TabsTrigger value="examples">Examples</TabsTrigger>
+            <TabsTrigger value="import">Import</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="new" className="mt-4">
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                Creates the default starter level.
+              </div>
+              <Button
+                onClick={() => {
+                  actions.newLevel()
+                  handleOpenChange(false)
+                }}
+              >
+                Create New Level
+              </Button>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="examples" className="mt-4">
+            <div className="space-y-3">
+              {examples.length === 0 ? (
+                <div className="text-sm text-muted-foreground">No example levels found.</div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="exampleSourceSelect" className="text-sm w-24">Source:</label>
+                    <select
+                      id="exampleSourceSelect"
+                      className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
+                      value={selectedSource}
+                      onChange={(e) => {
+                        const nextSource = e.target.value
+                        setSelectedSource(nextSource)
+
+                        const nextFolders = Array.from(new Set(examples.filter((ex) => ex.source === nextSource).map((ex) => ex.folder))).sort((a, b) => a.localeCompare(b))
+                        const nextFolder = nextFolders[0] || ''
+                        setSelectedFolder(nextFolder)
+
+                        const first = examples.find((ex) => ex.source === nextSource && ex.folder === nextFolder)
+                        if (first) setSelectedExampleKey(first.key)
+                      }}
+                    >
+                      {sources.map((source) => (
+                        <option key={source} value={source}>
+                          {source}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="exampleFolderSelect" className="text-sm w-24">Folder:</label>
+                    <select
+                      id="exampleFolderSelect"
+                      className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
+                      value={selectedFolder}
+                      onChange={(e) => {
+                        const nextFolder = e.target.value
+                        setSelectedFolder(nextFolder)
+                        const first = examples.find((ex) => ex.source === selectedSource && ex.folder === nextFolder)
+                        if (first) setSelectedExampleKey(first.key)
+                      }}
+                    >
+                      {folders.map((folder) => (
+                        <option key={folder} value={folder}>
+                          {folder}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="exampleLevelSelect" className="text-sm w-24">Level:</label>
+                    <select
+                      id="exampleLevelSelect"
+                      className="flex-1 border rounded px-2 py-1 text-sm min-w-0"
+                      value={selectedExampleKey}
+                      onChange={(e) => setSelectedExampleKey(e.target.value)}
+                    >
+                      {examplesInFolder.map((ex) => (
+                        <option key={ex.key} value={ex.key}>
+                          {ex.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <Button onClick={handleLoadExample}>Load Example</Button>
+                </>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="import" className="mt-4">
+            <div className="space-y-3">
+              <textarea
+                className="w-full h-64 p-2 border rounded-md font-mono text-xs bg-muted"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="version 4
 #
 Block -1 -1 0 5 5 0.6 0.8 1 1 0 0 0 0 0 0 0
 ..."
-        />
+              />
+              <div className="flex items-center justify-end gap-2">
+                <Button variant="outline" onClick={() => handleOpenChange(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleImportText}>
+                  <Upload className="w-4 h-4 mr-1" />
+                  Import
+                </Button>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
         {error && (
           <div className="text-sm text-destructive flex items-center gap-1">
             <AlertTriangle className="w-4 h-4" />
             {error}
           </div>
         )}
+
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+          <Button variant="outline" onClick={() => handleOpenChange(false)}>
+            Close
           </Button>
-          <Button onClick={handleImport}>Import</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -552,14 +741,8 @@ export function Toolbar() {
   return (
     <div className="h-12 border-b border-border bg-card flex items-center px-2 gap-2">
       {/* File operations */}
-      <Button variant="outline" size="sm" onClick={() => actions.newLevel()}>
-        <FilePlus className="w-4 h-4 mr-1" />
-        New
-      </Button>
-
+      <NewImportDialog />
       <SaveLoadDialog />
-
-      <ImportDialog />
       <ExportDialog />
       <HeaderDialog />
 

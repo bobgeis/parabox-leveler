@@ -219,7 +219,7 @@ export function GridEditor() {
       let newHeldKey: HeldKeyType = null
       if (['1', '2', '3', '4', '5'].includes(e.key)) {
         newHeldKey = e.key as '1' | '2' | '3' | '4' | '5'
-      } else if (e.key === 'Backspace' || e.key === 'Delete') {
+      } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '`' || e.key === '~') {
         newHeldKey = 'delete'
       } else if (e.key === 'v' || e.key === 'V') {
         newHeldKey = 'paste'
@@ -236,7 +236,15 @@ export function GridEditor() {
       }
     }
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (['1', '2', '3', '4', '5'].includes(e.key) || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'v' || e.key === 'V') {
+      if (
+        ['1', '2', '3', '4', '5'].includes(e.key) ||
+        e.key === 'Backspace' ||
+        e.key === 'Delete' ||
+        e.key === '`' ||
+        e.key === '~' ||
+        e.key === 'v' ||
+        e.key === 'V'
+      ) {
         setHeldKey(null)
         setIsDragging(false)
         visitedCells.current.clear()
@@ -446,6 +454,8 @@ export function GridEditor() {
 
         case 'Backspace':
         case 'Delete':
+        case '`':
+        case '~':
           e.preventDefault()
           if (selectedObj) {
             actions.deleteSelected()

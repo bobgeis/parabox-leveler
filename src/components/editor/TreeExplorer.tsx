@@ -109,11 +109,11 @@ export function TreeExplorer() {
   const snap = useSnapshot(state)
 
   return (
-    <div className="w-56 border-r border-border flex flex-col bg-card">
+    <div className="w-56 border-r border-border flex flex-col bg-card min-h-0">
       <div className="p-2 border-b border-border">
         <h2 className="text-sm font-semibold">Level Explorer</h2>
       </div>
-      <ScrollArea className="flex-1">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="p-1">
           {/* Root block */}
           <div
