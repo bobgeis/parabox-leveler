@@ -5,6 +5,7 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/parabox-leveler/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
